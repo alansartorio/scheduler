@@ -3,5 +3,6 @@ pub mod span;
 pub mod task;
 pub mod day;
 pub mod collidable;
+pub mod combinable;
 pub mod week;
 
