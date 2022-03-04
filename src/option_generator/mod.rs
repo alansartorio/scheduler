@@ -1,7 +1,5 @@
-use gen_iter::gen_iter;
-use itertools::{iproduct, Itertools, MultiProduct};
-use permutator::{CartesianProduct, CartesianProductIterator};
-use std::iter::{self, Map};
+use itertools::Itertools;
+use std::iter;
 
 //fn generate<const N: usize>(counts: [u8; N]) -> impl Iterator<Item = [Option<u8>; N]> {
 //let iters: [Vec<Option<u8>>; N] = counts.map(|count| iter::once(None).chain((0..count).map(|n| Some(n)))).into();
@@ -37,10 +35,10 @@ use std::iter::{self, Map};
 //})
 //}
 
-fn generate<'a, T: Copy + 'a>(vectors: &'a Vec<Vec<T>>) -> impl Iterator<Item = Vec<Option<T>>> + 'a {
+pub fn generate<'a, T: 'a>(vectors: &'a Vec<Vec<T>>) -> impl Iterator<Item = Vec<Option<&'a T>>> + 'a {
     vectors
         .iter()
-        .map(|v| iter::once(None).chain(v.iter().map(Clone::clone).map(Option::Some)))
+        .map(|v| iter::once(None).chain(v.iter().map(Option::Some)))
         .multi_cartesian_product()
 }
 
@@ -50,19 +48,13 @@ mod tests {
 
     #[test]
     fn generate_test() {
-        //let generate = |vectors: Vec<Vec<_>>| {
-        //vectors
-        //.iter()
-        //.map(|v| iter::once(None).chain(v.iter().map(Option::Some)))
-        //.multi_cartesian_product()
-        //};
-
         assert_eq!(
             generate(&vec![
                 (0..1u8).collect::<Vec<u8>>(),
                 (0..2u8).collect::<Vec<u8>>()
             ])
-            .map(|v| v.into_iter().collect_vec())
+            .map(|v| v.into_iter().map(|x| x.map(Clone::clone)))
+            .map(|v| v.collect_vec())
             .collect::<Vec<Vec<Option<u8>>>>(),
             vec![
                 vec![None, None],

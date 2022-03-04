@@ -1,11 +1,11 @@
-use enum_map::{Enum, EnumMap, enum_map};
+use enum_map::{enum_map, Enum, EnumMap};
 
 use crate::models::day::Day;
 
 use super::collidable::Collidable;
+use super::combinable::Combinable;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use super::combinable::Combinable;
 
 #[derive(Debug, Enum, Clone, Copy, EnumIter)]
 pub enum DaysOfTheWeek {
@@ -18,9 +18,9 @@ pub enum DaysOfTheWeek {
     Saturday,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Week<T> {
-    days: EnumMap<DaysOfTheWeek, Day<T>>,
+    pub days: EnumMap<DaysOfTheWeek, Day<T>>,
 }
 
 impl<T> Week<T> {
@@ -28,19 +28,21 @@ impl<T> Week<T> {
         Week { days }
     }
 
+    pub fn empty() -> Week<T> {
+        Self::new(enum_map! {
+            _ => Day::empty()
+        })
+    }
 }
 impl<T: Clone> Combinable for Week<T> {
     fn combine(&self, other: &Self) -> Self {
-        Week::new(
-            enum_map! {
-                day => self.days[day].combine(&other.days[day]),
-            }
-        )
+        Week::new(enum_map! {
+            day => self.days[day].combine(&other.days[day]),
+        })
     }
 }
 
 impl<T> Collidable for Week<T> {
-
     fn collides(&self, other: &Self) -> bool {
         for day in DaysOfTheWeek::iter() {
             let day1 = &self.days[day];

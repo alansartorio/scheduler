@@ -1,15 +1,12 @@
 use std::cmp::Ordering;
 
-use gen_iter::{gen_iter, GenIter};
 use itertools::Itertools;
 
 use super::{collidable::Collidable, combinable::Combinable, task::Task};
-//use extend::ext;
-use extend::ext;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Day<T> {
-    tasks: Vec<Task<T>>,
+    pub tasks: Vec<Task<T>>,
     has_collisions: bool,
 }
 

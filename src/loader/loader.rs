@@ -1,5 +1,6 @@
-use std::{collections::HashMap, fmt::Debug, rc::Weak};
-pub use std::{error::Error, fmt::Display, rc::Rc, str::FromStr, string::ParseError};
+use std::{fmt::{Debug, Display}, rc::Weak, cell::RefCell, borrow::Borrow};
+pub use std::{error::Error, rc::Rc, str::FromStr, string::ParseError};
+use itertools::Itertools;
 
 use enum_map::enum_map;
 use rusqlite::{named_params, Connection};
@@ -18,17 +19,23 @@ pub struct Building {
 
 #[derive(Debug, Clone)]
 pub struct TaskInfo {
-    //subject: Weak<Subject>,
+    subject: RefCell<Weak<Subject>>,
     building: Building,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SubjectCommision {
     pub name: String,
+    pub subject: RefCell<Weak<Subject>>,
     pub schedule: Week<TaskInfo>,
 }
+impl Display for SubjectCommision {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({})", RefCell::borrow(&self.subject).upgrade().unwrap(), self.name)
+    }
+}
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Code {
     high: u8,
     low: u8,
@@ -62,6 +69,11 @@ pub struct Subject {
     pub commissions: Vec<SubjectCommision>,
 }
 
+impl Display for Subject {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} - {}", self.code, self.name)
+    }
+}
 impl Subject {
     pub fn find_commission_by_id<'a>(&'a self, id: &str) -> Option<&'a SubjectCommision> {
         self.commissions.iter().find(|com| com.name == id)
@@ -100,6 +112,7 @@ fn query_tasks_for_day(
                         building: Building {
                             name: row.get(1).ok(),
                         },
+                        subject: RefCell::new(Weak::new()),
                     },
                 ))
             },
@@ -123,6 +136,7 @@ fn query_subject_commissions(
             |row| {
                 Ok(SubjectCommision {
                     name: row.get(1).unwrap(),
+                    subject: RefCell::new(Weak::new()),
                     schedule: Week::new(enum_map! {
                         day => Day::new(
                             query_tasks_for_day(&connection, row.get(2).unwrap(), day)
@@ -137,7 +151,7 @@ fn query_subject_commissions(
         .collect()
 }
 
-pub fn load() -> Result<Vec<Subject>, Box<dyn Error>> {
+pub fn load() -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
     let connection = rusqlite::Connection::open_with_flags(
         "../data/database.db",
         rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
@@ -153,19 +167,29 @@ pub fn load() -> Result<Vec<Subject>, Box<dyn Error>> {
     //}
     //dbg!(query_tasks_for_day(&connection, "32422".to_owned(), DaysOfTheWeek::Tuesday));
 
-    let x = Ok(connection
+    let x = connection
         .prepare("SELECT * FROM subjects")
         .unwrap()
         .query_map([], |row| {
-            Ok(Subject {
+            Ok(Rc::new(Subject {
                 code: row.get::<_, String>(0)?.parse().unwrap(),
                 name: row.get(1)?,
                 commissions: query_subject_commissions(&connection, row.get(0).unwrap()),
-            })
+            }))
         })?
         .map(Result::unwrap)
-        .collect());
-    x
+        .collect_vec();
+    for sub in &x {
+        for com in &sub.commissions {
+            *RefCell::borrow_mut(&com.subject) = Rc::downgrade(&sub);
+            for (_day, day_tasks) in &com.schedule.days {
+                for task in &day_tasks.tasks {
+                    *RefCell::borrow_mut(&task.info.subject) = Rc::downgrade(&sub);
+                }
+            }
+        }
+    }
+    Ok(x)
 
     //Ok(vec![Subject {
     //code: "01.30".parse().unwrap(),
