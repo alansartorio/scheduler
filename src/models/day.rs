@@ -7,7 +7,7 @@ use super::{collidable::Collidable, combinable::Combinable, task::Task};
 #[derive(Debug, Clone)]
 pub struct Day<T> {
     pub tasks: Vec<Task<T>>,
-    has_collisions: bool,
+    pub has_collisions: bool,
 }
 
 //#[ext]

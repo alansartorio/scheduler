@@ -5,7 +5,7 @@ mod loader;
 mod models;
 mod option_generator;
 
-use std::borrow::Borrow;
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::rc::Rc;
 
@@ -25,6 +25,10 @@ impl<I: Iterator<Item = Rc<Subject>>> I {
         self.find(|sub| (*sub).code == code).map(|s| s.clone())
     }
 
+    fn blacklist_codes(self, codes: HashSet<Code>) -> Vec<Rc<Subject>> {
+        self.filter(|sub| !codes.contains(&sub.code)).map(|s| s.clone()).collect_vec()
+    }
+
     fn whitelist_codes(self, codes: HashSet<Code>) -> Vec<Rc<Subject>> {
         self.filter(|sub| codes.contains(&sub.code)).map(|s| s.clone()).collect_vec()
     }
@@ -36,24 +40,29 @@ fn main() {
             HashSet::<_>::from_iter(
                 include_str!($file)
                     .lines()
+                    .map(str::trim)
+                    .filter(|line| !line.starts_with("#"))
+                    .filter(|line| !line.is_empty())
+                    .map(|line| &line[..5])
                     .map(str::parse::<Code>)
                     .map(Result::unwrap),
             )
         };
     }
+    let mandatory = load_codes!("../../data/mandatory.txt");
+    let blacklisted = load_codes!("../../data/blacklisted.txt");
     let code1 = load_codes!("../../data/available-codes.txt");
-    dbg!(&code1);
     let code2 = load_codes!("../../data/available-codes2.txt");
-    dbg!(&code2);
-    let codes = code1.intersection(&code2);
+    let codes = code1.intersection(&code2).cloned().collect::<HashSet<_>>();
+    let codes = codes.difference(&blacklisted).cloned().collect::<HashSet<_>>();
 
-    dbg!(codes.clone().collect_vec());
+    dbg!(codes.clone());
 
     let subjects = load().unwrap();
     let subjects = subjects
         .iter()
         .cloned()
-        .whitelist_codes(HashSet::from_iter(codes.map(Clone::clone)))
+        .whitelist_codes(codes)
         .iter()
         .map(|sub| sub.commissions.clone())
         .collect_vec();
@@ -65,8 +74,14 @@ fn main() {
             continue;
         }
         let filtered = option.iter().filter_map(|&a| a).collect_vec();
-        let _combined = filtered.iter().map(|c| &c.schedule).fold(Week::empty(), |a, b| Week::combine(&a, &b));
-        println!("{}", filtered.iter().fold(String::new(), |acc, &com| acc + &com.to_string() + " | "));
+        if !mandatory.iter().all(|m| filtered.iter().map(|com| RefCell::borrow(&com.subject).upgrade().unwrap().code).contains(m)) {
+            continue;
+        }
+        let combined = filtered.iter().map(|c| &c.schedule).fold(Week::empty(), |a, b| Week::combine(&a, &b));
+        if combined.days.iter().any(|(_day, day_data)| day_data.has_collisions) {
+            continue;
+        }
+        println!("{}", filtered.iter().join(" | "));
         //dbg!(combined);
     }
 
