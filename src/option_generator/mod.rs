@@ -63,19 +63,6 @@ where
     out
 }
 
-pub fn collides_with_previous<'a, T: Collidable + Hash + Eq>(
-    pair_collisions: Rc<HashSet<((usize, &T), (usize, &T))>>,
-    current_index: usize,
-    previously_chosen: &Vec<Option<&T>>,
-    val: &T,
-) -> bool {
-    previously_chosen.iter().enumerate().any(|(i, previous)| {
-        previous
-            .map(|previous| pair_collisions.contains(&((i, previous), (current_index, val))))
-            .unwrap_or(false)
-    })
-}
-
 pub fn recursive_generate<'a, T: Collidable + Hash + Eq + Clone>(
     pair_collisions: Rc<HashSet<((usize, &'a T), (usize, &'a T))>>,
     previously_chosen: Vec<Option<&'a T>>,
@@ -87,22 +74,25 @@ pub fn recursive_generate<'a, T: Collidable + Hash + Eq + Clone>(
     let to_choose = &vectors[0];
     let current_index = previously_chosen.len();
 
+    let collides_with_previous = {
+        let previously_chosen = previously_chosen.clone();
+        let pair_collisions = pair_collisions.clone();
+        move |val: &T| {
+            previously_chosen.iter().enumerate().any(|(i, previous)| {
+                previous
+                    .map(|previous| {
+                        pair_collisions.contains(&((i, previous), (current_index, val)))
+                    })
+                    .unwrap_or(false)
+            })
+        }
+    };
+
     Box::new(
         to_choose
             .items
             .iter()
-            .filter({
-                let pair_collisions = pair_collisions.clone();
-                let previously_chosen = previously_chosen.clone();
-                move |val| {
-                    !collides_with_previous(
-                        pair_collisions.clone(),
-                        current_index,
-                        &previously_chosen,
-                        val,
-                    )
-                }
-            })
+            .filter(move |val| !collides_with_previous(val))
             .map(Some)
             .chain(if to_choose.mandatory {
                 Either::Left(iter::empty())
@@ -133,10 +123,6 @@ pub fn generate<'a, T: Collidable + Hash + Eq + Clone>(
     let pair_collisions = find_pair_collisions(vectors);
 
     recursive_generate(Rc::new(pair_collisions), vec![], vectors)
-    //vectors
-    //.iter()
-    //.map(|v| iter::once(None).chain(v.iter().map(Option::Some)))
-    //.multi_cartesian_product()
 }
 
 #[cfg(test)]

@@ -54,7 +54,6 @@ fn main() {
         };
     }
     let mandatory = load_codes!("../data/mandatory.txt");
-    dbg!(&mandatory);
     let blacklisted = load_codes!("../data/blacklisted.txt");
     //let code1 = load_codes!("../data/available-codes.txt");
     let code2 = load_codes!("../data/available-codes.txt");
@@ -64,8 +63,6 @@ fn main() {
         .difference(&blacklisted)
         .cloned()
         .collect::<HashSet<_>>();
-
-    dbg!(codes.clone());
 
     let subjects = load().unwrap();
     let subjects = subjects
@@ -88,25 +85,6 @@ fn main() {
             continue;
         }
         let filtered = option.iter().filter_map(|&a| a).collect_vec();
-        //if !mandatory.iter().all(|m| {
-        //filtered
-        //.iter()
-        //.map(|com| RefCell::borrow(&com.subject).upgrade().unwrap().code)
-        //.contains(m)
-        //}) {
-        //continue;
-        //}
-        //let combined = filtered
-        //.iter()
-        //.map(|c| &c.schedule)
-        //.fold(Week::empty(), |a, b| Week::combine(&a, &b));
-        //if combined
-        //.days
-        //.iter()
-        //.any(|(_day, day_data)| day_data.has_collisions)
-        //{
-        //panic!("This should not have a collision.");
-        //}
 
         println!(
             "{}",
