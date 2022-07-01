@@ -1,7 +1,8 @@
 use std::fmt::{Debug, Display};
+use std::ops::Sub;
 use std::{error::Error, str::FromStr};
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Time {
     pub hour: u8,
     pub minutes: u8,
@@ -36,6 +37,14 @@ impl FromStr for Time {
             hour: hour.parse()?,
             minutes: minutes.parse()?,
         })
+    }
+}
+
+impl Sub for Time {
+    type Output = u64;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        (self.hour as u64 * 60 + self.minutes as u64) - (rhs.hour as u64 * 60 + rhs.minutes as u64)
     }
 }
 

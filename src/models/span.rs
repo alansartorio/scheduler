@@ -3,7 +3,7 @@ use std::fmt::Display;
 
 use super::time::Time;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Span {
     pub start: Time,
     pub end: Time,
@@ -13,6 +13,10 @@ impl Span {
     pub fn new(start: Time, end: Time) -> Span {
         assert!(start < end);
         Span { start, end }
+    }
+
+    pub fn duration(&self) -> u64 {
+        self.end - self.start
     }
 }
 

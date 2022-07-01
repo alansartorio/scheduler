@@ -1,5 +1,10 @@
 use itertools::Itertools;
+use std::collections::HashSet;
 use std::iter;
+use std::rc::Rc;
+
+use crate::models::collidable::Collidable;
+use core::hash::Hash;
 
 //fn generate<const N: usize>(counts: [u8; N]) -> impl Iterator<Item = [Option<u8>; N]> {
 //let iters: [Vec<Option<u8>>; N] = counts.map(|count| iter::once(None).chain((0..count).map(|n| Some(n)))).into();
@@ -35,34 +40,110 @@ use std::iter;
 //})
 //}
 
-pub fn generate<'a, T: 'a>(vectors: &'a Vec<Vec<T>>) -> impl Iterator<Item = Vec<Option<&'a T>>> + 'a {
-    vectors
-        .iter()
-        .map(|v| iter::once(None).chain(v.iter().map(Option::Some)))
-        .multi_cartesian_product()
+fn find_pair_collisions<'a, T>(
+    vectors: &'a Vec<Vec<T>>,
+) -> HashSet<((usize, &'a T), (usize, &'a T))>
+where
+    T: Collidable + Hash + Eq,
+{
+    let mut out = HashSet::new();
+    for pair in vectors.iter().enumerate().combinations(2) {
+        for (com1, com2) in pair[0].1.iter().cartesian_product(pair[1].1) {
+            if com1.collides(com2) {
+                out.insert(((pair[0].0, com1), (pair[1].0, com2)));
+            }
+        }
+    }
+    out
+}
+
+pub fn collides_with_previous<'a, T: Collidable + Hash + Eq>(
+    pair_collisions: Rc<HashSet<((usize, &T), (usize, &T))>>,
+    current_index: usize,
+    previously_chosen: &Vec<Option<&T>>,
+    val: &T,
+) -> bool {
+    previously_chosen.iter().enumerate().any(|(i, previous)| {
+        previous
+            .map(|previous| pair_collisions.contains(&((i, previous), (current_index, val))))
+            .unwrap_or(false)
+    })
+}
+
+pub fn recursive_generate<'a, T: Collidable + Hash + Eq + Clone>(
+    pair_collisions: Rc<HashSet<((usize, &'a T), (usize, &'a T))>>,
+    previously_chosen: Vec<Option<&'a T>>,
+    vectors: &'a [Vec<T>],
+) -> Box<dyn Iterator<Item = Vec<Option<&'a T>>> + 'a> {
+    if vectors.len() == 0 {
+        return Box::new(iter::once(previously_chosen));
+    }
+    let to_choose = &vectors[0];
+    let current_index = previously_chosen.len();
+
+    Box::new(
+        to_choose
+            .iter()
+            .filter({
+                let pair_collisions = pair_collisions.clone();
+                let previously_chosen = previously_chosen.clone();
+                move |val| {
+                    !collides_with_previous(pair_collisions.clone(), current_index, &previously_chosen, val)
+                }
+            })
+            .map(Some)
+            .chain(iter::once(None))
+            .flat_map(move |val| {
+                let mut updated_previously_chosen = previously_chosen.clone();
+                updated_previously_chosen.push(val);
+                recursive_generate(
+                    pair_collisions.clone(),
+                    updated_previously_chosen,
+                    &vectors[1..],
+                )
+            }),
+    )
+}
+
+pub fn generate<'a, T: Collidable + Hash + Eq + Clone>(
+    vectors: &'a Vec<Vec<T>>,
+) -> impl Iterator<Item = Vec<Option<&'a T>>> + 'a {
+    let pair_collisions = find_pair_collisions(vectors);
+
+    recursive_generate(Rc::new(pair_collisions), vec![], vectors)
+    //vectors
+    //.iter()
+    //.map(|v| iter::once(None).chain(v.iter().map(Option::Some)))
+    //.multi_cartesian_product()
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::models::span::Span;
+
     use super::*;
 
     #[test]
     fn generate_test() {
+        let sa = Span::new("00:00".parse().unwrap(), "01:00".parse().unwrap());
+        let sb = Span::new("01:00".parse().unwrap(), "02:00".parse().unwrap());
+        let sc = Span::new("02:00".parse().unwrap(), "03:00".parse().unwrap());
         assert_eq!(
-            generate(&vec![
-                (0..1u8).collect::<Vec<u8>>(),
-                (0..2u8).collect::<Vec<u8>>()
-            ])
-            .map(|v| v.into_iter().map(|x| x.map(Clone::clone)))
-            .map(|v| v.collect_vec())
-            .collect::<Vec<Vec<Option<u8>>>>(),
+            generate(&vec![vec![sa, sb, sc], vec![sa, sb,],])
+                .map(|v| v.into_iter().map(|x| x.map(Clone::clone)))
+                .map(|v| v.collect_vec())
+                .collect::<Vec<Vec<_>>>(),
             vec![
+                vec![Some(sa), Some(sb)],
+                vec![Some(sa), None],
+                vec![Some(sb), Some(sa)],
+                vec![Some(sb), None],
+                vec![Some(sc), Some(sa)],
+                vec![Some(sc), Some(sb)],
+                vec![Some(sc), None],
+                vec![None, Some(sa)],
+                vec![None, Some(sb)],
                 vec![None, None],
-                vec![None, Some(0u8)],
-                vec![None, Some(1u8)],
-                vec![Some(0u8), None],
-                vec![Some(0u8), Some(0u8)],
-                vec![Some(0u8), Some(1u8)]
             ]
         );
     }

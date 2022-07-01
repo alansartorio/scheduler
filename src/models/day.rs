@@ -91,8 +91,8 @@ impl<T> Collidable for Day<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Span;
-    use crate::Time;
+    use crate::models::span::Span;
+    use crate::models::time::Time;
 
     //#[test]
     //fn monotonic_tests() {

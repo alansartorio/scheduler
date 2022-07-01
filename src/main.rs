@@ -58,9 +58,10 @@ fn main() {
     }
     let mandatory = load_codes!("../data/mandatory.txt");
     let blacklisted = load_codes!("../data/blacklisted.txt");
-    let code1 = load_codes!("../data/available-codes.txt");
-    let code2 = load_codes!("../data/available-codes2.txt");
-    let codes = code1.intersection(&code2).cloned().collect::<HashSet<_>>();
+    //let code1 = load_codes!("../data/available-codes.txt");
+    let code2 = load_codes!("../data/available-aldo.txt");
+    //let codes = code1.intersection(&code2).cloned().collect::<HashSet<_>>();
+    let codes = code2;
     let codes = codes
         .difference(&blacklisted)
         .cloned()
@@ -80,7 +81,8 @@ fn main() {
     let options = option_generator::generate::<SubjectCommision>(&subjects);
 
     for option in options {
-        if option.iter().filter_map(|&a| a).count() < 4 {
+        let subject_count = option.iter().filter_map(|&a| a).count();
+        if subject_count < 6 || subject_count > 8 {
             continue;
         }
         let filtered = option.iter().filter_map(|&a| a).collect_vec();
@@ -92,24 +94,26 @@ fn main() {
         }) {
             continue;
         }
-        let combined = filtered
-            .iter()
-            .map(|c| &c.schedule)
-            .fold(Week::empty(), |a, b| Week::combine(&a, &b));
-        if combined
-            .days
-            .iter()
-            .any(|(_day, day_data)| day_data.has_collisions)
-        {
-            continue;
-        }
+        //let combined = filtered
+            //.iter()
+            //.map(|c| &c.schedule)
+            //.fold(Week::empty(), |a, b| Week::combine(&a, &b));
+        //if combined
+            //.days
+            //.iter()
+            //.any(|(_day, day_data)| day_data.has_collisions)
+        //{
+            //panic!("This should not have a collision.");
+        //}
+
         println!(
             "{}",
             filtered
                 .iter()
                 .enumerate()
-                .map(|(_i, com)| com.to_string().red())
-                .join(&" \u{2588} ".green().to_string())
+                .map(|(_i, com)| com.to_string())
+                .join(", ")
+                //.join(&" \u{2588} ".green().to_string())
         );
         //dbg!(combined);
     }
