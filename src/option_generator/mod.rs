@@ -117,6 +117,21 @@ pub struct Group<T> {
     pub mandatory: bool,
 }
 
+impl<T> Group<T> {
+    pub fn mandatory(items: Vec<T>) -> Self {
+        Self {
+            items,
+            mandatory: true,
+        }
+    }
+    pub fn optional(items: Vec<T>) -> Self {
+        Self {
+            items,
+            mandatory: false,
+        }
+    }
+}
+
 pub fn generate<'a, T: Collidable + Hash + Eq + Clone>(
     vectors: &'a Vec<Group<T>>,
 ) -> impl Iterator<Item = Vec<Option<&'a T>>> + 'a {
@@ -137,21 +152,27 @@ mod tests {
         let sb = Span::new("01:00".parse().unwrap(), "02:00".parse().unwrap());
         let sc = Span::new("02:00".parse().unwrap(), "03:00".parse().unwrap());
         assert_eq!(
-            generate(&vec![vec![sa, sb, sc], vec![sa, sb,],])
-                .map(|v| v.into_iter().map(|x| x.map(Clone::clone)))
-                .map(|v| v.collect_vec())
-                .collect::<Vec<Vec<_>>>(),
+            generate(&vec![
+                Group::optional(vec![sa, sb, sc]),
+                Group::mandatory(vec![sa, sc]),
+                Group::optional(vec![sa, sb,]),
+            ])
+            .map(|v| v.into_iter().map(|x| x.map(Clone::clone)))
+            .map(|v| v.collect_vec())
+            .collect::<Vec<Vec<_>>>(),
             vec![
-                vec![Some(sa), Some(sb)],
-                vec![Some(sa), None],
-                vec![Some(sb), Some(sa)],
-                vec![Some(sb), None],
-                vec![Some(sc), Some(sa)],
-                vec![Some(sc), Some(sb)],
-                vec![Some(sc), None],
-                vec![None, Some(sa)],
-                vec![None, Some(sb)],
-                vec![None, None],
+                vec![Some(sa), Some(sc), Some(sb)],
+                vec![Some(sa), Some(sc), None],
+                vec![Some(sb), Some(sa), None],
+                vec![Some(sb), Some(sc), Some(sa)],
+                vec![Some(sb), Some(sc), None],
+                vec![Some(sc), Some(sa), Some(sb)],
+                vec![Some(sc), Some(sa), None],
+                vec![None, Some(sa), Some(sb)],
+                vec![None, Some(sa), None],
+                vec![None, Some(sc), Some(sa)],
+                vec![None, Some(sc), Some(sb)],
+                vec![None, Some(sc), None],
             ]
         );
     }

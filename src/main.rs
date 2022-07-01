@@ -1,22 +1,18 @@
 #![feature(generators)]
 #![feature(generic_arg_infer)]
 
-mod loader;
-mod models;
-mod option_generator;
-
 use std::collections::HashSet;
 use std::fs::read_to_string;
 use std::rc::Rc;
 
 use itertools::Itertools;
-use loader::loader::{Code, Subject};
+use scheduler::loader::loader::{Code, Subject};
 //use sqlite;
 
 use extend::ext;
 
-use crate::loader::loader::{load, SubjectCommision};
-use crate::option_generator::Group;
+use scheduler::loader::loader::{load, SubjectCommision};
+use scheduler::option_generator::{generate, Group};
 
 #[ext]
 impl<I: Iterator<Item = Rc<Subject>>> I {
@@ -75,9 +71,8 @@ fn main() {
             mandatory: mandatory.contains(&sub.code),
         })
         .collect_vec();
-    dbg!(&subjects);
 
-    let options = option_generator::generate::<SubjectCommision>(&subjects);
+    let options = generate::<SubjectCommision>(&subjects);
 
     for option in options {
         let subject_count = option.iter().filter_map(|&a| a).count();
