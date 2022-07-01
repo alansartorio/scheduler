@@ -1,3 +1,4 @@
+use itertools::Either;
 use itertools::Itertools;
 use std::collections::HashSet;
 use std::iter;
@@ -41,15 +42,20 @@ use core::hash::Hash;
 //}
 
 fn find_pair_collisions<'a, T>(
-    vectors: &'a Vec<Vec<T>>,
+    vectors: &'a Vec<Group<T>>,
 ) -> HashSet<((usize, &'a T), (usize, &'a T))>
 where
     T: Collidable + Hash + Eq,
 {
     let mut out = HashSet::new();
     for pair in vectors.iter().enumerate().combinations(2) {
-        for (com1, com2) in pair[0].1.iter().cartesian_product(pair[1].1) {
-            if com1.collides(com2) {
+        for (com1, com2) in pair[0]
+            .1
+            .items
+            .iter()
+            .cartesian_product(pair[1].1.items.iter())
+        {
+            if com1.collides(&com2) {
                 out.insert(((pair[0].0, com1), (pair[1].0, com2)));
             }
         }
@@ -73,7 +79,7 @@ pub fn collides_with_previous<'a, T: Collidable + Hash + Eq>(
 pub fn recursive_generate<'a, T: Collidable + Hash + Eq + Clone>(
     pair_collisions: Rc<HashSet<((usize, &'a T), (usize, &'a T))>>,
     previously_chosen: Vec<Option<&'a T>>,
-    vectors: &'a [Vec<T>],
+    vectors: &'a [Group<T>],
 ) -> Box<dyn Iterator<Item = Vec<Option<&'a T>>> + 'a> {
     if vectors.len() == 0 {
         return Box::new(iter::once(previously_chosen));
@@ -83,16 +89,26 @@ pub fn recursive_generate<'a, T: Collidable + Hash + Eq + Clone>(
 
     Box::new(
         to_choose
+            .items
             .iter()
             .filter({
                 let pair_collisions = pair_collisions.clone();
                 let previously_chosen = previously_chosen.clone();
                 move |val| {
-                    !collides_with_previous(pair_collisions.clone(), current_index, &previously_chosen, val)
+                    !collides_with_previous(
+                        pair_collisions.clone(),
+                        current_index,
+                        &previously_chosen,
+                        val,
+                    )
                 }
             })
             .map(Some)
-            .chain(iter::once(None))
+            .chain(if to_choose.mandatory {
+                Either::Left(iter::empty())
+            } else {
+                Either::Right(iter::once(None))
+            })
             .flat_map(move |val| {
                 let mut updated_previously_chosen = previously_chosen.clone();
                 updated_previously_chosen.push(val);
@@ -105,8 +121,14 @@ pub fn recursive_generate<'a, T: Collidable + Hash + Eq + Clone>(
     )
 }
 
+#[derive(Debug)]
+pub struct Group<T> {
+    pub items: Vec<T>,
+    pub mandatory: bool,
+}
+
 pub fn generate<'a, T: Collidable + Hash + Eq + Clone>(
-    vectors: &'a Vec<Vec<T>>,
+    vectors: &'a Vec<Group<T>>,
 ) -> impl Iterator<Item = Vec<Option<&'a T>>> + 'a {
     let pair_collisions = find_pair_collisions(vectors);
 

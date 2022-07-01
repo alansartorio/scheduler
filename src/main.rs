@@ -5,12 +5,10 @@ mod loader;
 mod models;
 mod option_generator;
 
-use std::cell::RefCell;
 use std::collections::HashSet;
 use std::fs::read_to_string;
 use std::rc::Rc;
 
-use colored::Colorize;
 use itertools::Itertools;
 use loader::loader::{Code, Subject};
 //use sqlite;
@@ -18,8 +16,7 @@ use loader::loader::{Code, Subject};
 use extend::ext;
 
 use crate::loader::loader::{load, SubjectCommision};
-use crate::models::combinable::Combinable;
-use crate::models::week::Week;
+use crate::option_generator::Group;
 
 #[ext]
 impl<I: Iterator<Item = Rc<Subject>>> I {
@@ -57,9 +54,10 @@ fn main() {
         };
     }
     let mandatory = load_codes!("../data/mandatory.txt");
+    dbg!(&mandatory);
     let blacklisted = load_codes!("../data/blacklisted.txt");
     //let code1 = load_codes!("../data/available-codes.txt");
-    let code2 = load_codes!("../data/available-aldo.txt");
+    let code2 = load_codes!("../data/available-codes.txt");
     //let codes = code1.intersection(&code2).cloned().collect::<HashSet<_>>();
     let codes = code2;
     let codes = codes
@@ -75,35 +73,39 @@ fn main() {
         .cloned()
         .whitelist_codes(codes)
         .iter()
-        .map(|sub| sub.commissions.clone())
+        .map(|sub| Group {
+            items: sub.commissions.clone(),
+            mandatory: mandatory.contains(&sub.code),
+        })
         .collect_vec();
+    dbg!(&subjects);
 
     let options = option_generator::generate::<SubjectCommision>(&subjects);
 
     for option in options {
         let subject_count = option.iter().filter_map(|&a| a).count();
-        if subject_count < 6 || subject_count > 8 {
+        if subject_count < 4 {
             continue;
         }
         let filtered = option.iter().filter_map(|&a| a).collect_vec();
-        if !mandatory.iter().all(|m| {
-            filtered
-                .iter()
-                .map(|com| RefCell::borrow(&com.subject).upgrade().unwrap().code)
-                .contains(m)
-        }) {
-            continue;
-        }
+        //if !mandatory.iter().all(|m| {
+        //filtered
+        //.iter()
+        //.map(|com| RefCell::borrow(&com.subject).upgrade().unwrap().code)
+        //.contains(m)
+        //}) {
+        //continue;
+        //}
         //let combined = filtered
-            //.iter()
-            //.map(|c| &c.schedule)
-            //.fold(Week::empty(), |a, b| Week::combine(&a, &b));
+        //.iter()
+        //.map(|c| &c.schedule)
+        //.fold(Week::empty(), |a, b| Week::combine(&a, &b));
         //if combined
-            //.days
-            //.iter()
-            //.any(|(_day, day_data)| day_data.has_collisions)
+        //.days
+        //.iter()
+        //.any(|(_day, day_data)| day_data.has_collisions)
         //{
-            //panic!("This should not have a collision.");
+        //panic!("This should not have a collision.");
         //}
 
         println!(
@@ -112,8 +114,7 @@ fn main() {
                 .iter()
                 .enumerate()
                 .map(|(_i, com)| com.to_string())
-                .join(", ")
-                //.join(&" \u{2588} ".green().to_string())
+                .join(", ") //.join(&" \u{2588} ".green().to_string())
         );
         //dbg!(combined);
     }
