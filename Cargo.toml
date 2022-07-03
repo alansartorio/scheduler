@@ -16,3 +16,4 @@ gen-iter = "*"
 itertools = "*"
 permutator = "*"
 colored = "*"
+clap = { version = "3.2.8", features = ["derive"] }

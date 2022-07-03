@@ -3,6 +3,7 @@
 
 use std::collections::HashSet;
 use std::fs::read_to_string;
+use std::path::PathBuf;
 use std::rc::Rc;
 
 use itertools::Itertools;
@@ -33,6 +34,19 @@ impl<I: Iterator<Item = Rc<Subject>>> I {
     }
 }
 
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    #[clap(short, long, value_parser)]
+    files: Vec<PathBuf>,
+    #[clap(short, long, value_parser)]
+    mandatory: PathBuf,
+    #[clap(short, long, value_parser)]
+    blacklisted: Option<PathBuf>,
+}
+
 fn main() {
     macro_rules! load_codes {
         ($file: expr) => {
@@ -49,16 +63,20 @@ fn main() {
             )
         };
     }
-    let mandatory = load_codes!("../data/mandatory.txt");
-    let blacklisted = load_codes!("../data/blacklisted.txt");
-    //let code1 = load_codes!("../data/available-codes.txt");
-    let code2 = load_codes!("../data/available-codes.txt");
-    //let codes = code1.intersection(&code2).cloned().collect::<HashSet<_>>();
-    let codes = code2;
-    let codes = codes
-        .difference(&blacklisted)
-        .cloned()
-        .collect::<HashSet<_>>();
+    let args = Args::parse();
+    let mut files = args.files.into_iter();
+    let mut codes = load_codes!(files.next().unwrap());
+    for file in files {
+        codes = codes.intersection(&load_codes!(file)).cloned().collect();
+        dbg!(&codes);
+    }
+    let mandatory = load_codes!(args.mandatory);
+
+    if let Some(blacklisted) = args.blacklisted {
+        let blacklisted = load_codes!(blacklisted);
+
+        codes = codes.difference(&blacklisted).cloned().collect();
+    }
 
     let subjects = load().unwrap();
     let subjects = subjects
@@ -76,7 +94,7 @@ fn main() {
 
     for option in options {
         let subject_count = option.iter().filter_map(|&a| a).count();
-        if subject_count < 4 {
+        if subject_count < 4 || subject_count > 5 {
             continue;
         }
         let filtered = option.iter().filter_map(|&a| a).collect_vec();
