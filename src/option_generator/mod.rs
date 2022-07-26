@@ -1,17 +1,14 @@
+use crate::models::Collidable;
+use core::hash::Hash;
 use itertools::Either;
 use itertools::Itertools;
 use std::collections::HashSet;
 use std::iter;
 use std::rc::Rc;
-use crate::models::Collidable;
-use core::hash::Hash;
-
 
 type CollisionSet<'a, T> = HashSet<((usize, &'a T), (usize, &'a T))>;
 
-fn find_pair_collisions<'a, T>(
-    vectors: impl Iterator<Item = &'a Vec<T>>,
-) -> CollisionSet<'a, T>
+fn find_pair_collisions<'a, T>(vectors: impl Iterator<Item = &'a Vec<T>>) -> CollisionSet<'a, T>
 where
     T: Collidable + Hash + Eq,
 {
@@ -113,8 +110,8 @@ pub fn generate<'a, T: Collidable + Hash + Eq + Clone>(
 
 #[cfg(test)]
 mod tests {
-    use crate::models::Span;
     use super::*;
+    use crate::models::Span;
 
     #[test]
     fn generate_test() {
@@ -122,13 +119,10 @@ mod tests {
         let sb = Span::new("01:00".parse().unwrap(), "02:00".parse().unwrap());
         let sc = Span::new("02:00".parse().unwrap(), "03:00".parse().unwrap());
         assert_eq!(
-            generate(
-                &[vec![sa, sc],],
-                &[vec![sa, sb, sc], vec![sa, sb,],]
-            )
-            .map(|v| v.into_iter().map(|x| x.map(Clone::clone)))
-            .map(|v| v.collect_vec())
-            .collect::<Vec<Vec<_>>>(),
+            generate(&[vec![sa, sc],], &[vec![sa, sb, sc], vec![sa, sb,],])
+                .map(|v| v.into_iter().map(|x| x.map(Clone::clone)))
+                .map(|v| v.collect_vec())
+                .collect::<Vec<Vec<_>>>(),
             vec![
                 vec![Some(sa), Some(sb), None],
                 vec![Some(sa), Some(sc), Some(sb)],

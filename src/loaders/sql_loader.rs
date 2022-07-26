@@ -1,11 +1,13 @@
 use crate::models::Week;
-use crate::models::{Day, DaysOfTheWeek, Subject, SubjectCommision, Task, TaskInfo, Span, Building};
+use crate::models::{
+    Building, Day, DaysOfTheWeek, Span, Subject, SubjectCommision, Task, TaskInfo,
+};
 use enum_map::enum_map;
+use itertools::Itertools;
 use rusqlite::{named_params, Connection};
+use std::cell::RefCell;
 use std::error::Error;
 use std::rc::{Rc, Weak};
-use std::cell::RefCell;
-use itertools::Itertools;
 
 struct CommissionData {
     name: String,

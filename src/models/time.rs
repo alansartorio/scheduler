@@ -28,7 +28,6 @@ impl Display for Time {
     }
 }
 
-
 impl FromStr for Time {
     type Err = Box<dyn Error>;
     fn from_str(s: &str) -> Result<Time, Self::Err> {

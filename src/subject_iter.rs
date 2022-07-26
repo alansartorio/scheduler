@@ -1,7 +1,5 @@
-use std::{rc::Rc, collections::HashSet};
-use scheduler::models::{Subject, Code};
-
-
+use scheduler::models::{Code, Subject};
+use std::{collections::HashSet, rc::Rc};
 
 pub struct Whitelist<'a, I: Iterator<Item = Rc<Subject>>> {
     iter: I,
@@ -61,4 +59,3 @@ pub trait SubjectIterable: Iterator<Item = Rc<Subject>> {
 }
 
 impl<T: Iterator<Item = Rc<Subject>>> SubjectIterable for T {}
-

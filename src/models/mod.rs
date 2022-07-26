@@ -7,7 +7,7 @@ pub use day::Day;
 mod span;
 pub use span::Span;
 mod subjects;
-pub use subjects::{Subject, SubjectCommision, TaskInfo, Building, Code};
+pub use subjects::{Building, Code, Subject, SubjectCommision, TaskInfo};
 mod task;
 pub use task::Task;
 mod time;
