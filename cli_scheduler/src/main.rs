@@ -52,7 +52,7 @@ fn main() {
         codes = codes.difference(&blacklisted).cloned().collect();
     }
 
-    let subjects = load(Path::new("json_parser/src/test.json")).unwrap();
+    let subjects = load(Path::new("../json_parser/src/test.json")).unwrap();
     let optional_subjects = subjects
         .iter()
         .cloned()
