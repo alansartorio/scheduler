@@ -125,8 +125,8 @@ mod tests {
         let sc = Span::new("02:00".parse().unwrap(), "03:00".parse().unwrap());
         assert_eq!(
             generate(
-                &vec![vec![sa, sc],],
-                &vec![vec![sa, sb, sc], vec![sa, sb,],]
+                &[vec![sa, sc],],
+                &[vec![sa, sb, sc], vec![sa, sb,],]
             )
             .map(|v| v.into_iter().map(|x| x.map(Clone::clone)))
             .map(|v| v.collect_vec())

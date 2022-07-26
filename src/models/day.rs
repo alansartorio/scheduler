@@ -60,7 +60,9 @@ impl<T: Clone> Combinable for Day<T> {
             .tasks
             .iter()
             .cloned()
-            .merge_by(other.tasks.clone(), |a, b| a.span.cmp(&b.span) == Ordering::Less)
+            .merge_by(other.tasks.clone(), |a, b| {
+                a.span.cmp(&b.span) == Ordering::Less
+            })
             .collect();
         Self::new(merged)
     }
@@ -129,37 +131,22 @@ mod tests {
         let _span7 = Span::new(times[6], times[7]);
         let _span3 = Span::new(times[1], times[3]);
         let _span6 = Span::new(times[2], times[4]);
-        assert_eq!(
-            Day::new(vec![Task::new(_span1, ()), Task::new(_span2, ())]).has_collisions(),
-            false
-        );
-        assert_eq!(
-            Day::new(vec![Task::new(_span1, ()), Task::new(_span3, ())]).has_collisions(),
-            false
-        );
-        assert_eq!(
-            Day::new(vec![Task::new(_span2, ()), Task::new(_span3, ())]).has_collisions(),
-            true
-        );
-        assert_eq!(
-            Day::new(vec![
-                Task::new(_span1, ()),
-                Task::new(_span2, ()),
-                Task::new(_span4, ()),
-                Task::new(_span5, ())
-            ])
-            .has_collisions(),
-            false
-        );
-        assert_eq!(
-            Day::new(vec![
-                Task::new(_span1, ()),
-                Task::new(_span2, ()),
-                Task::new(_span6, ()),
-                Task::new(_span5, ())
-            ])
-            .has_collisions(),
-            true
-        );
+        assert!(!Day::new(vec![Task::new(_span1, ()), Task::new(_span2, ())]).has_collisions(),);
+        assert!(!Day::new(vec![Task::new(_span1, ()), Task::new(_span3, ())]).has_collisions(),);
+        assert!(Day::new(vec![Task::new(_span2, ()), Task::new(_span3, ())]).has_collisions(),);
+        assert!(!Day::new(vec![
+            Task::new(_span1, ()),
+            Task::new(_span2, ()),
+            Task::new(_span4, ()),
+            Task::new(_span5, ())
+        ])
+        .has_collisions(),);
+        assert!(Day::new(vec![
+            Task::new(_span1, ()),
+            Task::new(_span2, ()),
+            Task::new(_span6, ()),
+            Task::new(_span5, ())
+        ])
+        .has_collisions(),);
     }
 }

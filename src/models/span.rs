@@ -44,21 +44,21 @@ mod tests {
         let time3 = Time::new(3, 0);
         let time4 = Time::new(4, 0);
         let time5 = Time::new(5, 0);
-        assert_eq!(
-            Span::collides(&Span::new(time1, time2), &Span::new(time2, time3)),
-            false
-        );
-        assert_eq!(
-            Span::collides(&Span::new(time1, time3), &Span::new(time2, time3)),
-            true
-        );
-        assert_eq!(
-            Span::collides(&Span::new(time1, time4), &Span::new(time2, time3)),
-            true
-        );
-        assert_eq!(
-            Span::collides(&Span::new(time4, time5), &Span::new(time3, time4)),
-            false
-        );
+        assert!(!Span::collides(
+            &Span::new(time1, time2),
+            &Span::new(time2, time3)
+        ),);
+        assert!(Span::collides(
+            &Span::new(time1, time3),
+            &Span::new(time2, time3)
+        ),);
+        assert!(Span::collides(
+            &Span::new(time1, time4),
+            &Span::new(time2, time3)
+        ),);
+        assert!(!Span::collides(
+            &Span::new(time4, time5),
+            &Span::new(time3, time4)
+        ),);
     }
 }
