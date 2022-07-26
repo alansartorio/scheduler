@@ -1,8 +1,16 @@
-pub mod time;
-pub mod span;
-pub mod task;
-pub mod day;
-pub mod collidable;
-pub mod combinable;
-pub mod week;
-
+mod collidable;
+pub use collidable::Collidable;
+mod combinable;
+pub use combinable::Combinable;
+mod day;
+pub use day::Day;
+mod span;
+pub use span::Span;
+mod subjects;
+pub use subjects::{Subject, SubjectCommision, TaskInfo, Building, Code};
+mod task;
+pub use task::Task;
+mod time;
+pub use time::Time;
+mod week;
+pub use week::{DaysOfTheWeek, Week};

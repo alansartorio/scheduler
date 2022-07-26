@@ -1,113 +1,15 @@
-use itertools::Itertools;
-use std::{
-    cell::RefCell,
-    fmt::{Debug, Display},
-    hash::Hash,
-    rc::Weak,
-};
-pub use std::{error::Error, rc::Rc, str::FromStr, string::ParseError};
-
+use crate::models::Week;
+use crate::models::{Day, DaysOfTheWeek, Subject, SubjectCommision, Task, TaskInfo, Span, Building};
 use enum_map::enum_map;
 use rusqlite::{named_params, Connection};
+use std::error::Error;
+use std::rc::{Rc, Weak};
+use std::cell::RefCell;
+use itertools::Itertools;
 
-use crate::models::{
-    collidable::Collidable,
-    day::Day,
-    span::Span,
-    task::Task,
-    week::{DaysOfTheWeek, Week},
-};
-
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Building {
-    pub name: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct TaskInfo {
-    pub subject: RefCell<Weak<Subject>>,
-    pub building: Building,
-}
-
-#[derive(Debug, Clone)]
-pub struct SubjectCommision {
-    pub name: String,
-    pub subject: Weak<Subject>,
-    pub schedule: Week<TaskInfo>,
-}
-impl Display for SubjectCommision {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({})", self.subject.upgrade().unwrap(), self.name)
-    }
-}
-impl Collidable for SubjectCommision {
-    fn collides(&self, other: &Self) -> bool {
-        self.schedule.collides(&other.schedule)
-    }
-}
-impl Hash for SubjectCommision {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-        self.subject.upgrade().unwrap().code.hash(state);
-    }
-}
-impl PartialEq for SubjectCommision {
-    fn eq(&self, other: &Self) -> bool {
-        self.name.eq(&other.name)
-            && self
-                .subject
-                .upgrade()
-                .unwrap()
-                .eq(&other.subject.upgrade().unwrap())
-    }
-}
-impl Eq for SubjectCommision {}
-
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
-pub struct Code {
-    high: u8,
-    low: u8,
-}
-impl FromStr for Code {
-    type Err = Box<dyn Error>;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (high, low) = s
-            .split_once('.')
-            .ok_or("Subject Code must contain a dot.")?;
-        let high: u8 = high.parse()?;
-        let low: u8 = low.parse()?;
-        Ok(Code { high, low })
-    }
-}
-impl Display for Code {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:02}.{:02}", self.high, self.low)
-    }
-}
-impl Debug for Code {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self)
-    }
-}
-
-#[derive(Debug, Hash, PartialEq)]
-pub struct Subject {
-    pub code: Code,
-    pub name: String,
-    pub commissions: Vec<SubjectCommision>,
-    pub credits: u8,
-}
-
-impl Eq for Subject {}
-impl Display for Subject {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} - {} ({})", self.code, self.name, self.credits)
-    }
-}
-impl Subject {
-    pub fn find_commission_by_id<'a>(&'a self, id: &str) -> Option<&'a SubjectCommision> {
-        self.commissions.iter().find(|com| com.name == id)
-    }
+struct CommissionData {
+    name: String,
+    schedule: Week<TaskInfo>,
 }
 
 fn query_tasks_for_day(
@@ -150,11 +52,6 @@ fn query_tasks_for_day(
         .unwrap()
         .map(Result::unwrap)
         .collect()
-}
-
-struct CommissionData {
-    name: String,
-    schedule: Week<TaskInfo>,
 }
 
 fn query_subject_commissions(connection: &Connection, subject_code: String) -> Vec<CommissionData> {

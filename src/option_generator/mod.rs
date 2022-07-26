@@ -3,8 +3,7 @@ use itertools::Itertools;
 use std::collections::HashSet;
 use std::iter;
 use std::rc::Rc;
-
-use crate::models::collidable::Collidable;
+use crate::models::Collidable;
 use core::hash::Hash;
 
 
@@ -114,8 +113,7 @@ pub fn generate<'a, T: Collidable + Hash + Eq + Clone>(
 
 #[cfg(test)]
 mod tests {
-    use crate::models::span::Span;
-
+    use crate::models::Span;
     use super::*;
 
     #[test]

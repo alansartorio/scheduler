@@ -1,6 +1,5 @@
 use std::{rc::Rc, collections::HashSet};
-
-use scheduler::loader::{Subject, Code};
+use scheduler::models::{Subject, Code};
 
 
 

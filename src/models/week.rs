@@ -1,7 +1,5 @@
 use enum_map::{enum_map, Enum, EnumMap};
-
 use crate::models::day::Day;
-
 use super::collidable::Collidable;
 use super::combinable::Combinable;
 use strum::IntoEnumIterator;

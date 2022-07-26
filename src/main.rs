@@ -1,11 +1,12 @@
+use clap::Parser;
+use itertools::Itertools;
+use scheduler::loaders::sql_loader::load;
+use scheduler::models::{Code, SubjectCommision};
+use scheduler::option_generator::generate;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
-use itertools::Itertools;
-use clap::Parser;
-use scheduler::loader::{load, Code, SubjectCommision};
-use scheduler::option_generator::generate;
 mod subject_iter;
 use subject_iter::SubjectIterable;
 
