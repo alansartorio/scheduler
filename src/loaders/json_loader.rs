@@ -6,9 +6,7 @@ use std::fs::File;
 use std::path::Path;
 use std::rc::Rc;
 
-pub fn load(path: &Path) -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
-    let reader = File::open(path)?;
-    let parsed: json_parser::SubjectCommissions = serde_json::from_reader(&reader)?;
+fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
     Ok(parsed
         .0
         .iter()
@@ -74,4 +72,15 @@ pub fn load(path: &Path) -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
             })
         })
         .collect_vec())
+}
+
+pub fn load(path: &Path) -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
+    let reader = File::open(path)?;
+    let parsed: json_parser::SubjectCommissions = serde_json::from_reader(&reader)?;
+    map(parsed)
+}
+
+pub fn load_from_string(string: &str) -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
+    let parsed = serde_json::from_str(string)?;
+    map(parsed)
 }
