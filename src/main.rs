@@ -1,6 +1,6 @@
 use clap::Parser;
 use itertools::Itertools;
-use scheduler::loaders::sql_loader::load;
+use scheduler::loaders::json_loader::load;
 use scheduler::models::{Code, SubjectCommision};
 use scheduler::option_generator::generate;
 use std::collections::HashSet;
@@ -52,7 +52,7 @@ fn main() {
         codes = codes.difference(&blacklisted).cloned().collect();
     }
 
-    let subjects = load().unwrap();
+    let subjects = load(Path::new("json_parser/src/test.json")).unwrap();
     let optional_subjects = subjects
         .iter()
         .cloned()

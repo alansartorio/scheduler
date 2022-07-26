@@ -1,12 +1,9 @@
-use std::error::Error;
-use std::path::Path;
-
-use itertools::Itertools;
-
-//use json_parser::SubjectCommissions;
 use crate::models::*;
 use enum_map::enum_map;
+use itertools::Itertools;
+use std::error::Error;
 use std::fs::File;
+use std::path::Path;
 use std::rc::Rc;
 
 pub fn load(path: &Path) -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
@@ -20,14 +17,7 @@ pub fn load(path: &Path) -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
         .map(|(code, commissions)| {
             Rc::new_cyclic(|sub| {
                 let list = commissions.collect_vec();
-                Subject {
-                code: Code {
-                    high: code.high,
-                    low: code.low,
-                },
-                name: list[0].subject_name.clone(),
-                credits: 0,
-                commissions: list
+                let commissions = list
                     .iter()
                     .map(|c| SubjectCommision {
                         name: c.commission_name.clone(),
@@ -55,15 +45,32 @@ pub fn load(path: &Path) -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
                                             ),
                                             TaskInfo {
                                                 subject: sub.clone(),
-                                                building: Building{name: Some(t.building.clone())}
+                                                building: Building {
+                                                    name: Some(t.building.clone())
+                                                }
                                             }
                                     )
                                     ).collect_vec())
                             }
                         }),
                     })
-                .collect_vec(),
-            }
+                    .collect_vec();
+                let credits = commissions[0]
+                    .schedule
+                    .days
+                    .values()
+                    .flat_map(|s| &s.tasks)
+                    .map(|t| (t.span.duration() / 60) as u8)
+                    .sum();
+                Subject {
+                    code: Code {
+                        high: code.high,
+                        low: code.low,
+                    },
+                    name: list[0].subject_name.clone(),
+                    credits,
+                    commissions,
+                }
             })
         })
         .collect_vec())
