@@ -1,14 +1,8 @@
-#![feature(generators)]
-#![feature(generic_arg_infer)]
-
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
-
 use itertools::Itertools;
-//use sqlite;
-
 use clap::Parser;
 use scheduler::loader::{load, Code, SubjectCommision};
 use scheduler::option_generator::generate;
