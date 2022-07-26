@@ -7,7 +7,7 @@ use super::{collidable::Collidable, combinable::Combinable, task::Task};
 #[derive(Debug, Clone)]
 pub struct Day<T> {
     pub tasks: Vec<Task<T>>,
-    pub has_collisions: bool,
+    has_collisions: bool,
 }
 
 //#[ext]
@@ -44,7 +44,7 @@ impl<T> Day<T> {
         Self::new(vec![])
     }
 
-    fn has_collisions(&self) -> bool {
+    pub fn has_collisions(&self) -> bool {
         for (task1, task2) in self.tasks.iter().tuple_windows() {
             if task1.span.collides(&task2.span) {
                 return true;

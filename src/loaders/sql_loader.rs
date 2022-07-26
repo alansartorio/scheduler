@@ -1,20 +1,15 @@
-use crate::models::Week;
 use crate::models::{
     Building, Day, DaysOfTheWeek, Span, Subject, SubjectCommision, Task, TaskInfo,
 };
+use crate::models::{Code, Week};
 use enum_map::enum_map;
 use itertools::Itertools;
 use rusqlite::{named_params, Connection};
-use std::cell::RefCell;
 use std::error::Error;
 use std::rc::{Rc, Weak};
 
-struct CommissionData {
-    name: String,
-    schedule: Week<TaskInfo>,
-}
-
 fn query_tasks_for_day(
+    subject: &Weak<Subject>,
     connection: &Connection,
     commission_id: String,
     day: DaysOfTheWeek,
@@ -46,7 +41,7 @@ fn query_tasks_for_day(
                         building: Building {
                             name: row.get(1).ok(),
                         },
-                        subject: RefCell::new(Weak::new()),
+                        subject: subject.clone(),
                     },
                 ))
             },
@@ -56,7 +51,11 @@ fn query_tasks_for_day(
         .collect()
 }
 
-fn query_subject_commissions(connection: &Connection, subject_code: String) -> Vec<CommissionData> {
+fn query_subject_commissions(
+    subject: &Weak<Subject>,
+    connection: &Connection,
+    subject_code: String,
+) -> Vec<SubjectCommision> {
     connection
         .prepare("SELECT * FROM commissions WHERE subjectCode = :code")
         .unwrap()
@@ -65,13 +64,14 @@ fn query_subject_commissions(connection: &Connection, subject_code: String) -> V
                 ":code": subject_code,
             },
             |row| {
-                Ok(CommissionData {
+                Ok(SubjectCommision {
                     name: row.get(1).unwrap(),
                     schedule: Week::new(enum_map! {
                         day => Day::new(
-                            query_tasks_for_day(connection, row.get(2).unwrap(), day)
-                    )
+                            query_tasks_for_day(subject, connection, row.get(2).unwrap(), day)
+                        )
                     }),
+                    subject: subject.clone(),
                 })
             },
         )
@@ -88,72 +88,29 @@ pub fn load() -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
     )
     .unwrap();
 
-    //for building in connection
-    //.prepare("SELECT * FROM buildings")
-    //.unwrap()
-    //.query_map([], |row| Ok(Building { name: row.get(0)? }))?
-    //{
-    //print!("{:?}", building.unwrap());
-    //}
-    //dbg!(query_tasks_for_day(&connection, "32422".to_owned(), DaysOfTheWeek::Tuesday));
-
     let x = connection
-        .prepare("SELECT * FROM subjects")
-        .unwrap()
+        .prepare("SELECT * FROM subjects")?
         .query_map([], |row| {
-            let commissions = query_subject_commissions(&connection, row.get(0).unwrap());
-
-            let code = row.get::<_, String>(0)?.parse().unwrap();
+            let code: Code = row.get::<_, String>(0)?.parse().unwrap();
             let name = row.get(1)?;
-            let credits = commissions[0]
-                .schedule
-                .days
-                .values()
-                .flat_map(|s| &s.tasks)
-                .map(|t| (t.span.duration() / 60) as u8)
-                .sum();
-
-            let subject = Rc::new_cyclic(|rc| Subject {
-                code,
-                name,
-                credits,
-                commissions: commissions
-                    .into_iter()
-                    .map(|c| SubjectCommision {
-                        name: c.name,
-                        schedule: c.schedule,
-                        subject: rc.clone(),
-                    })
-                    .collect_vec(),
-            });
-
-            Ok(subject)
+            Ok(Rc::new_cyclic(|rc| {
+                let commissions = query_subject_commissions(&rc, &connection, code.to_string());
+                let credits = commissions[0]
+                    .schedule
+                    .days
+                    .values()
+                    .flat_map(|s| &s.tasks)
+                    .map(|t| (t.span.duration() / 60) as u8)
+                    .sum();
+                Subject {
+                    code,
+                    name,
+                    credits,
+                    commissions,
+                }
+            }))
         })?
         .map(Result::unwrap)
         .collect_vec();
-    for sub in &x {
-        for com in &sub.commissions {
-            for (_day, day_tasks) in &com.schedule.days {
-                for task in &day_tasks.tasks {
-                    *RefCell::borrow_mut(&task.info.subject) = Rc::downgrade(sub);
-                }
-            }
-        }
-    }
     Ok(x)
-
-    //Ok(vec![Subject {
-    //code: "01.30".parse().unwrap(),
-    //commissions: vec![SubjectCommision {
-    //name: "Hola".to_owned(),
-    //schedule: Week::new(enum_map! {
-    //DaysOfTheWeek::Monday => Day::new(vec![
-    //Task::new(Span::new("15:00".parse().unwrap(), "18:00".parse().unwrap()), TaskInfo { building: Building { name: "External".to_owned() } }),
-    //]),
-    //_ => Day::empty(),
-    //}),
-    //}],
-    //}])
-    //let row = cursor.next().unwrap().unwrap();
-    //println!("{}", row[0].as_string().unwrap());
 }

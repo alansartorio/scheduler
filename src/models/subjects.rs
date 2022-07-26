@@ -1,11 +1,10 @@
 use crate::models::{Collidable, Week};
+pub use std::{error::Error, rc::Rc, str::FromStr, string::ParseError};
 use std::{
-    cell::RefCell,
     fmt::{Debug, Display},
     hash::Hash,
     rc::Weak,
 };
-pub use std::{error::Error, rc::Rc, str::FromStr, string::ParseError};
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Building {
@@ -14,7 +13,7 @@ pub struct Building {
 
 #[derive(Debug, Clone)]
 pub struct TaskInfo {
-    pub subject: RefCell<Weak<Subject>>,
+    pub subject: Weak<Subject>,
     pub building: Building,
 }
 
@@ -54,8 +53,8 @@ impl Eq for SubjectCommision {}
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Code {
-    high: u8,
-    low: u8,
+    pub high: u8,
+    pub low: u8,
 }
 impl FromStr for Code {
     type Err = Box<dyn Error>;
