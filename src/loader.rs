@@ -18,7 +18,7 @@ use crate::models::{
     week::{DaysOfTheWeek, Week},
 };
 
-#[derive(Debug, Clone, Hash, PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Building {
     pub name: Option<String>,
 }
@@ -59,12 +59,11 @@ impl Hash for SubjectCommision {
 impl PartialEq for SubjectCommision {
     fn eq(&self, other: &Self) -> bool {
         self.name.eq(&other.name)
-            && self
+            && self.subject.borrow().upgrade().unwrap().eq(&other
                 .subject
                 .borrow()
                 .upgrade()
-                .unwrap()
-                .eq(&other.subject.borrow().upgrade().unwrap())
+                .unwrap())
     }
 }
 impl Eq for SubjectCommision {}
@@ -175,7 +174,7 @@ fn query_subject_commissions(
                     subject: RefCell::new(Weak::new()),
                     schedule: Week::new(enum_map! {
                         day => Day::new(
-                            query_tasks_for_day(&connection, row.get(2).unwrap(), day)
+                            query_tasks_for_day(connection, row.get(2).unwrap(), day)
                     )
                     }),
                 })
@@ -211,10 +210,7 @@ pub fn load() -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
             Ok(Rc::new(Subject {
                 code: row.get::<_, String>(0)?.parse().unwrap(),
                 name: row.get(1)?,
-                credits: commissions
-                    .iter()
-                    .nth(0)
-                    .unwrap()
+                credits: commissions[0]
                     .schedule
                     .days
                     .values()
@@ -228,10 +224,10 @@ pub fn load() -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
         .collect_vec();
     for sub in &x {
         for com in &sub.commissions {
-            *RefCell::borrow_mut(&com.subject) = Rc::downgrade(&sub);
+            *RefCell::borrow_mut(&com.subject) = Rc::downgrade(sub);
             for (_day, day_tasks) in &com.schedule.days {
                 for task in &day_tasks.tasks {
-                    *RefCell::borrow_mut(&task.info.subject) = Rc::downgrade(&sub);
+                    *RefCell::borrow_mut(&task.info.subject) = Rc::downgrade(sub);
                 }
             }
         }

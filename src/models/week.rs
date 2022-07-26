@@ -51,6 +51,6 @@ impl<T> Collidable for Week<T> {
                 return true;
             }
         }
-        return false;
+        false
     }
 }

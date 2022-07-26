@@ -7,21 +7,19 @@ use std::rc::Rc;
 use crate::models::collidable::Collidable;
 use core::hash::Hash;
 
+
+type CollisionSet<'a, T> = HashSet<((usize, &'a T), (usize, &'a T))>;
+
 fn find_pair_collisions<'a, T>(
-    vectors: &'a Vec<Group<T>>,
-) -> HashSet<((usize, &'a T), (usize, &'a T))>
+    vectors: impl Iterator<Item = &'a Vec<T>>,
+) -> CollisionSet<'a, T>
 where
     T: Collidable + Hash + Eq,
 {
     let mut out = HashSet::new();
-    for pair in vectors.iter().enumerate().combinations(2) {
-        for (com1, com2) in pair[0]
-            .1
-            .items
-            .iter()
-            .cartesian_product(pair[1].1.items.iter())
-        {
-            if com1.collides(&com2) {
+    for pair in vectors.enumerate().combinations(2) {
+        for (com1, com2) in pair[0].1.iter().cartesian_product(pair[1].1.iter()) {
+            if com1.collides(com2) {
                 out.insert(((pair[0].0, com1), (pair[1].0, com2)));
             }
         }
@@ -30,11 +28,11 @@ where
 }
 
 pub fn recursive_generate<'a, T: Collidable + Hash + Eq + Clone>(
-    pair_collisions: Rc<HashSet<((usize, &'a T), (usize, &'a T))>>,
+    pair_collisions: Rc<CollisionSet<'a, T>>,
     previously_chosen: Rc<Vec<Option<&'a T>>>,
-    vectors: &'a [Group<T>],
+    vectors: Vec<Group<'a, T>>,
 ) -> Box<dyn Iterator<Item = Vec<Option<&'a T>>> + 'a> {
-    if vectors.len() == 0 {
+    if vectors.is_empty() {
         return Box::new(iter::once((*previously_chosen).clone()));
     }
     let to_choose = &vectors[0];
@@ -71,26 +69,26 @@ pub fn recursive_generate<'a, T: Collidable + Hash + Eq + Clone>(
                 recursive_generate(
                     pair_collisions.clone(),
                     Rc::new(updated_previously_chosen),
-                    &vectors[1..],
+                    (*vectors)[1..].to_vec(),
                 )
             }),
     )
 }
 
-#[derive(Debug)]
-pub struct Group<T> {
-    pub items: Vec<T>,
+#[derive(Debug, Clone)]
+pub struct Group<'a, T> {
+    pub items: &'a Vec<T>,
     pub mandatory: bool,
 }
 
-impl<T> Group<T> {
-    pub fn mandatory(items: Vec<T>) -> Self {
+impl<'a, T> Group<'a, T> {
+    pub fn mandatory(items: &'a Vec<T>) -> Self {
         Self {
             items,
             mandatory: true,
         }
     }
-    pub fn optional(items: Vec<T>) -> Self {
+    pub fn optional(items: &'a Vec<T>) -> Self {
         Self {
             items,
             mandatory: false,
@@ -99,11 +97,19 @@ impl<T> Group<T> {
 }
 
 pub fn generate<'a, T: Collidable + Hash + Eq + Clone>(
-    vectors: &'a Vec<Group<T>>,
+    mandatory: &'a [Vec<T>],
+    vectors: &'a [Vec<T>],
 ) -> impl Iterator<Item = Vec<Option<&'a T>>> + 'a {
-    let pair_collisions = find_pair_collisions(vectors);
+    let pair_collisions = find_pair_collisions(mandatory.iter().chain(vectors.iter()));
 
-    recursive_generate(Rc::new(pair_collisions), Rc::new(vec![]), vectors)
+    recursive_generate(
+        Rc::new(pair_collisions),
+        Rc::new(vec![]),
+        iter::empty()
+            .chain(mandatory.iter().map(|items| Group::mandatory(items)))
+            .chain(vectors.iter().map(|items| Group::optional(items)))
+            .collect::<Vec<_>>(),
+    )
 }
 
 #[cfg(test)]
@@ -118,27 +124,26 @@ mod tests {
         let sb = Span::new("01:00".parse().unwrap(), "02:00".parse().unwrap());
         let sc = Span::new("02:00".parse().unwrap(), "03:00".parse().unwrap());
         assert_eq!(
-            generate(&vec![
-                Group::optional(vec![sa, sb, sc]),
-                Group::mandatory(vec![sa, sc]),
-                Group::optional(vec![sa, sb,]),
-            ])
+            generate(
+                &vec![vec![sa, sc],],
+                &vec![vec![sa, sb, sc], vec![sa, sb,],]
+            )
             .map(|v| v.into_iter().map(|x| x.map(Clone::clone)))
             .map(|v| v.collect_vec())
             .collect::<Vec<Vec<_>>>(),
             vec![
+                vec![Some(sa), Some(sb), None],
                 vec![Some(sa), Some(sc), Some(sb)],
                 vec![Some(sa), Some(sc), None],
-                vec![Some(sb), Some(sa), None],
-                vec![Some(sb), Some(sc), Some(sa)],
-                vec![Some(sb), Some(sc), None],
+                vec![Some(sa), None, Some(sb)],
+                vec![Some(sa), None, None],
                 vec![Some(sc), Some(sa), Some(sb)],
                 vec![Some(sc), Some(sa), None],
-                vec![None, Some(sa), Some(sb)],
-                vec![None, Some(sa), None],
-                vec![None, Some(sc), Some(sa)],
-                vec![None, Some(sc), Some(sb)],
-                vec![None, Some(sc), None],
+                vec![Some(sc), Some(sb), Some(sa)],
+                vec![Some(sc), Some(sb), None],
+                vec![Some(sc), None, Some(sa)],
+                vec![Some(sc), None, Some(sb)],
+                vec![Some(sc), None, None],
             ]
         );
     }

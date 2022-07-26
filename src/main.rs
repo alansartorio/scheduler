@@ -2,37 +2,75 @@
 #![feature(generic_arg_infer)]
 
 use std::collections::HashSet;
+use std::fmt::Debug;
 use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::rc::Rc;
 
 use itertools::Itertools;
-use scheduler::loader::loader::{Code, Subject};
 //use sqlite;
 
-use extend::ext;
+use scheduler::loader::{load, Code, Subject, SubjectCommision};
+use scheduler::option_generator::generate;
 
-use scheduler::loader::loader::{load, SubjectCommision};
-use scheduler::option_generator::{generate, Group};
+fn whitelist_codes<I: Iterator<Item = Rc<Subject>>>(
+    codes: I,
+    list: HashSet<Code>,
+) -> impl Iterator<Item = Rc<Subject>> {
+    codes
+        .filter(move |sub| list.contains(&sub.code))
+        .map(|s| s.clone())
+}
 
-#[ext]
-impl<I: Iterator<Item = Rc<Subject>>> I {
-    fn get_by_code(&mut self, code: Code) -> Option<Rc<Subject>> {
+fn blacklist_codes<I: Iterator<Item = Rc<Subject>>>(
+    codes: I,
+    list: HashSet<Code>,
+) -> impl Iterator<Item = Rc<Subject>> {
+    codes
+        .filter(move |sub| !list.contains(&sub.code))
+        .map(|s| s.clone())
+}
+
+//struct Whitelist<I: Iterator<Item = Rc<Subject>>> {
+    //iter: I,
+    //list: HashSet<Code>,
+//}
+
+//impl<I: Iterator<Item = Rc<Subject>>> Iterator for Whitelist<I> {
+    //type Item = Rc<Subject>;
+
+    //fn next(&mut self) -> Option<Self::Item> {
+        //match self.iter.next() {
+            //Some(i) if self.list.contains(&i.code) => Some(i),
+            //_ => None,
+        //}
+    //}
+//}
+
+trait IterExtensions: Iterator<Item = Rc<Subject>> {
+    fn get_by_code(&mut self, code: Code) -> Option<Rc<Subject>>
+    where
+        Self: Sized,
+    {
         self.find(|sub| (*sub).code == code).map(|s| s.clone())
     }
 
-    fn blacklist_codes(self, codes: HashSet<Code>) -> Vec<Rc<Subject>> {
-        self.filter(|sub| !codes.contains(&sub.code))
-            .map(|s| s.clone())
-            .collect_vec()
+    fn whitelist_codes(
+        self: Box<Self>,
+        codes: HashSet<Code>,
+    ) -> Box<dyn Iterator<Item = Rc<Subject>>> {
+        Box::new(whitelist_codes(self, codes))
     }
 
-    fn whitelist_codes(self, codes: HashSet<Code>) -> Vec<Rc<Subject>> {
-        self.filter(|sub| codes.contains(&sub.code))
-            .map(|s| s.clone())
-            .collect_vec()
+    fn blacklist_codes(
+        self: Box<Self>,
+        codes: HashSet<Code>,
+    ) -> Box<dyn Iterator<Item = Rc<Subject>>> {
+        Box::new(blacklist_codes(self, codes))
     }
 }
+
+impl<T: Iterator<Item = Rc<Subject>>> IterExtensions for T {}
 
 use clap::Parser;
 
@@ -79,18 +117,18 @@ fn main() {
     }
 
     let subjects = load().unwrap();
-    let subjects = subjects
-        .iter()
-        .cloned()
+    let optional_subjects = Box::new(subjects.iter().cloned())
         .whitelist_codes(codes)
-        .iter()
-        .map(|sub| Group {
-            items: sub.commissions.clone(),
-            mandatory: mandatory.contains(&sub.code),
-        })
+        .blacklist_codes(mandatory.clone())
+        .map(|sub| sub.commissions.clone())
         .collect_vec();
 
-    let options = generate::<SubjectCommision>(&subjects);
+    let mandatory_subjects = Box::new(subjects.into_iter())
+        .whitelist_codes(mandatory.clone())
+        .map(|sub| sub.commissions.clone())
+        .collect_vec();
+
+    let options = generate::<SubjectCommision>(&mandatory_subjects, &optional_subjects);
 
     for option in options {
         let subject_count = option.iter().filter_map(|&a| a).count();

@@ -31,7 +31,7 @@ pub struct Day<T> {
 impl<T> Day<T> {
     pub fn new(mut tasks: Vec<Task<T>>) -> Day<T> {
         //assert!(tasks.iter().map(|task| task.span).is_monotonic_increasing());
-        tasks.sort_by(|a, b| (&a).span.cmp(&b.span));
+        tasks.sort_by(|a, b| a.span.cmp(&b.span));
         let mut day = Day {
             tasks,
             has_collisions: false,
