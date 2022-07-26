@@ -32,17 +32,12 @@ pub struct TaskInfo {
 #[derive(Debug, Clone)]
 pub struct SubjectCommision {
     pub name: String,
-    pub subject: RefCell<Weak<Subject>>,
+    pub subject: Weak<Subject>,
     pub schedule: Week<TaskInfo>,
 }
 impl Display for SubjectCommision {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} ({})",
-            RefCell::borrow(&self.subject).upgrade().unwrap(),
-            self.name
-        )
+        write!(f, "{} ({})", self.subject.upgrade().unwrap(), self.name)
     }
 }
 impl Collidable for SubjectCommision {
@@ -53,17 +48,17 @@ impl Collidable for SubjectCommision {
 impl Hash for SubjectCommision {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
-        self.subject.borrow().upgrade().unwrap().code.hash(state);
+        self.subject.upgrade().unwrap().code.hash(state);
     }
 }
 impl PartialEq for SubjectCommision {
     fn eq(&self, other: &Self) -> bool {
         self.name.eq(&other.name)
-            && self.subject.borrow().upgrade().unwrap().eq(&other
+            && self
                 .subject
-                .borrow()
                 .upgrade()
-                .unwrap())
+                .unwrap()
+                .eq(&other.subject.upgrade().unwrap())
     }
 }
 impl Eq for SubjectCommision {}
@@ -157,10 +152,12 @@ fn query_tasks_for_day(
         .collect()
 }
 
-fn query_subject_commissions(
-    connection: &Connection,
-    subject_code: String,
-) -> Vec<SubjectCommision> {
+struct CommissionData {
+    name: String,
+    schedule: Week<TaskInfo>,
+}
+
+fn query_subject_commissions(connection: &Connection, subject_code: String) -> Vec<CommissionData> {
     connection
         .prepare("SELECT * FROM commissions WHERE subjectCode = :code")
         .unwrap()
@@ -169,9 +166,8 @@ fn query_subject_commissions(
                 ":code": subject_code,
             },
             |row| {
-                Ok(SubjectCommision {
+                Ok(CommissionData {
                     name: row.get(1).unwrap(),
-                    subject: RefCell::new(Weak::new()),
                     schedule: Week::new(enum_map! {
                         day => Day::new(
                             query_tasks_for_day(connection, row.get(2).unwrap(), day)
@@ -207,24 +203,37 @@ pub fn load() -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
         .unwrap()
         .query_map([], |row| {
             let commissions = query_subject_commissions(&connection, row.get(0).unwrap());
-            Ok(Rc::new(Subject {
-                code: row.get::<_, String>(0)?.parse().unwrap(),
-                name: row.get(1)?,
-                credits: commissions[0]
-                    .schedule
-                    .days
-                    .values()
-                    .flat_map(|s| &s.tasks)
-                    .map(|t| (t.span.duration() / 60) as u8)
-                    .sum(),
-                commissions,
-            }))
+
+            let code = row.get::<_, String>(0)?.parse().unwrap();
+            let name = row.get(1)?;
+            let credits = commissions[0]
+                .schedule
+                .days
+                .values()
+                .flat_map(|s| &s.tasks)
+                .map(|t| (t.span.duration() / 60) as u8)
+                .sum();
+
+            let subject = Rc::new_cyclic(|rc| Subject {
+                code,
+                name,
+                credits,
+                commissions: commissions
+                    .into_iter()
+                    .map(|c| SubjectCommision {
+                        name: c.name,
+                        schedule: c.schedule,
+                        subject: rc.clone(),
+                    })
+                    .collect_vec(),
+            });
+
+            Ok(subject)
         })?
         .map(Result::unwrap)
         .collect_vec();
     for sub in &x {
         for com in &sub.commissions {
-            *RefCell::borrow_mut(&com.subject) = Rc::downgrade(sub);
             for (_day, day_tasks) in &com.schedule.days {
                 for task in &day_tasks.tasks {
                     *RefCell::borrow_mut(&task.info.subject) = Rc::downgrade(sub);
