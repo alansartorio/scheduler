@@ -164,12 +164,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
-name = "gen-iter"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1668ac3c7b8cc5f1e31565ed509d8d70aa1a81bd7f508b620725b78c6e1d7049"
-
-[[package]]
 name = "getrandom"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -477,7 +471,6 @@ dependencies = [
  "colored",
  "enum-map",
  "extend",
- "gen-iter",
  "itertools",
  "json_parser",
  "permutator",
