@@ -6,7 +6,7 @@ use enum_map::enum_map;
 use itertools::Itertools;
 use rusqlite::{named_params, Connection};
 use std::error::Error;
-use std::rc::{Rc, Weak};
+use std::sync::{Arc, Weak};
 
 fn query_tasks_for_day(
     subject: &Weak<Subject>,
@@ -81,7 +81,7 @@ fn query_subject_commissions(
         .collect()
 }
 
-pub fn load() -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
+pub fn load() -> Result<Vec<Arc<Subject>>, Box<dyn Error>> {
     let connection = rusqlite::Connection::open_with_flags(
         "../data/database.db",
         rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
@@ -93,8 +93,8 @@ pub fn load() -> Result<Vec<Rc<Subject>>, Box<dyn Error>> {
         .query_map([], |row| {
             let code: Code = row.get::<_, String>(0)?.parse().unwrap();
             let name = row.get(1)?;
-            Ok(Rc::new_cyclic(|rc| {
-                let commissions = query_subject_commissions(&rc, &connection, code.to_string());
+            Ok(Arc::new_cyclic(|rc| {
+                let commissions = query_subject_commissions(rc, &connection, code.to_string());
                 let credits = commissions[0]
                     .schedule
                     .days

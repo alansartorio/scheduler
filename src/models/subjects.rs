@@ -3,7 +3,7 @@ pub use std::{error::Error, rc::Rc, str::FromStr, string::ParseError};
 use std::{
     fmt::{Debug, Display},
     hash::Hash,
-    rc::Weak,
+    sync::Weak,
 };
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
