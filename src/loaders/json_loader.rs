@@ -3,6 +3,7 @@ use enum_map::enum_map;
 use itertools::Itertools;
 use std::error::Error;
 use std::fs::File;
+use std::io::Read;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -33,9 +34,7 @@ fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Arc<Subject>>, Box
                                 };
                                 Day::new(
                                     c.course_commission_times
-                                    .0
-                                    .iter()
-                                    .filter(|t| t.day == day)
+                                    .0 .iter() .filter(|t| t.day == day)
                                     .map(|t| Task::new(
                                             Span::new(
                                                 Time::new(t.span.start.hours, t.span.start.minutes),
@@ -76,7 +75,11 @@ fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Arc<Subject>>, Box
 
 pub fn load(path: &Path) -> Result<Vec<Arc<Subject>>, Box<dyn Error>> {
     let reader = File::open(path)?;
-    let parsed: json_parser::SubjectCommissions = serde_json::from_reader(&reader)?;
+    load_from_reader(reader)
+}
+
+pub fn load_from_reader<R: Read>(reader: R) -> Result<Vec<Arc<Subject>>, Box<dyn Error>> {
+    let parsed: json_parser::SubjectCommissions = serde_json::from_reader(reader)?;
     map(parsed)
 }
 
