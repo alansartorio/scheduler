@@ -4,8 +4,10 @@ use crate::models::day::Day;
 use enum_map::{enum_map, Enum, EnumMap};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use serde::Serialize;
 
-#[derive(Debug, Enum, Clone, Copy, EnumIter)]
+#[derive(Debug, Enum, Clone, Copy, EnumIter, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum DaysOfTheWeek {
     Sunday,
     Monday,
