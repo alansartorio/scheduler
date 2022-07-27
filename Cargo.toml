@@ -20,5 +20,6 @@ json_parser = { path = "json_parser", optional = true }
 serde_json = { version = "1.0.82", optional = true }
 
 [features]
+default = ["sqlite", "json"]
 sqlite = ["dep:rusqlite"]
 json = ["dep:serde_json", "dep:json_parser"]
