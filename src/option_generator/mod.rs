@@ -95,7 +95,7 @@ impl<'a, T> Group<'a, T> {
 pub fn generate<'a, T: Collidable + Hash + Eq + Clone>(
     mandatory: &'a [Vec<T>],
     vectors: &'a [Vec<T>],
-) -> impl Iterator<Item = Vec<Option<&'a T>>> + 'a {
+) -> Box<dyn Iterator<Item = Vec<Option<&'a T>>> + 'a> {
     let pair_collisions = find_pair_collisions(mandatory.iter().chain(vectors.iter()));
 
     recursive_generate(

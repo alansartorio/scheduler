@@ -11,9 +11,9 @@ fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Arc<Subject>>, Box
     Ok(parsed
         .0
         .iter()
-        .group_by(|s| s.subject_code)
+        .group_by(|s| (s.subject_code, &s.subject_name))
         .into_iter()
-        .map(|(code, commissions)| {
+        .map(|((code, name), commissions)| {
             Arc::new_cyclic(|sub| {
                 let list = commissions.collect_vec();
                 let commissions = list
@@ -64,7 +64,7 @@ fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Arc<Subject>>, Box
                         high: code.high,
                         low: code.low,
                     },
-                    name: list[0].subject_name.clone(),
+                    name: name.clone(),
                     credits,
                     commissions,
                 }
