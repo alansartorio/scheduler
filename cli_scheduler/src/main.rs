@@ -68,14 +68,14 @@ fn main() {
         .map(|sub| sub.commissions.clone())
         .collect_vec();
 
-    let options = generate::<SubjectCommision>(&mandatory_subjects, &optional_subjects);
+    let options = generate::<SubjectCommision>(mandatory_subjects, optional_subjects);
 
     for option in options {
-        let subject_count = option.iter().filter_map(|&a| a).count();
+        let subject_count = option.iter().filter_map(|a| a.as_ref()).count();
         if !(4..=5).contains(&subject_count) {
             continue;
         }
-        let filtered = option.iter().filter_map(|&a| a).collect_vec();
+        let filtered = option.iter().filter_map(|a| a.as_ref()).collect_vec();
 
         println!(
             "{}",

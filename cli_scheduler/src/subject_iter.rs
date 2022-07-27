@@ -1,42 +1,42 @@
 use scheduler::models::{Code, Subject};
-use std::{collections::HashSet, rc::Rc};
+use std::{collections::HashSet, sync::Arc};
 
-pub struct Whitelist<'a, I: Iterator<Item = Rc<Subject>>> {
+pub struct Whitelist<'a, I: Iterator<Item = Arc<Subject>>> {
     iter: I,
     list: &'a HashSet<Code>,
 }
-impl<'a, I: Iterator<Item = Rc<Subject>>> Whitelist<'a, I> {
+impl<'a, I: Iterator<Item = Arc<Subject>>> Whitelist<'a, I> {
     pub fn new(iter: I, list: &'a HashSet<Code>) -> Self {
         Self { iter, list }
     }
 }
-impl<'a, I: Iterator<Item = Rc<Subject>>> Iterator for Whitelist<'a, I> {
-    type Item = Rc<Subject>;
+impl<'a, I: Iterator<Item = Arc<Subject>>> Iterator for Whitelist<'a, I> {
+    type Item = Arc<Subject>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.find(|i| self.list.contains(&i.code))
     }
 }
 
-pub struct Blacklist<'a, I: Iterator<Item = Rc<Subject>>> {
+pub struct Blacklist<'a, I: Iterator<Item = Arc<Subject>>> {
     iter: I,
     list: &'a HashSet<Code>,
 }
-impl<'a, I: Iterator<Item = Rc<Subject>>> Blacklist<'a, I> {
+impl<'a, I: Iterator<Item = Arc<Subject>>> Blacklist<'a, I> {
     pub fn new(iter: I, list: &'a HashSet<Code>) -> Self {
         Self { iter, list }
     }
 }
-impl<'a, I: Iterator<Item = Rc<Subject>>> Iterator for Blacklist<'a, I> {
-    type Item = Rc<Subject>;
+impl<'a, I: Iterator<Item = Arc<Subject>>> Iterator for Blacklist<'a, I> {
+    type Item = Arc<Subject>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.find(|i| !self.list.contains(&i.code))
     }
 }
 
-pub trait SubjectIterable: Iterator<Item = Rc<Subject>> {
-    fn get_by_code(&mut self, code: Code) -> Option<Rc<Subject>>
+pub trait SubjectIterable: Iterator<Item = Arc<Subject>> {
+    fn get_by_code(&mut self, code: Code) -> Option<Arc<Subject>>
     where
         Self: Sized,
     {
@@ -58,4 +58,4 @@ pub trait SubjectIterable: Iterator<Item = Rc<Subject>> {
     }
 }
 
-impl<T: Iterator<Item = Rc<Subject>>> SubjectIterable for T {}
+impl<T: Iterator<Item = Arc<Subject>>> SubjectIterable for T {}
