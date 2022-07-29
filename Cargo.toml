@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "scheduler_cli"
+required-features = ["cli", "json"]
+
 [dependencies]
 rusqlite = { version = "*", optional = true }
 extend = "*"
@@ -17,8 +21,10 @@ colored = "*"
 itertools = "*"
 json_parser = { path = "json_parser", optional = true }
 serde_json = { version = "1.0.82", optional = true }
+clap = { version = "3.2.8", features = ["derive"], optional = true }
 
 [features]
 default = ["sqlite", "json"]
 sqlite = ["dep:rusqlite"]
 json = ["dep:serde_json", "dep:json_parser"]
+cli = ["dep:clap"]

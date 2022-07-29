@@ -52,23 +52,23 @@ fn main() {
         codes = codes.difference(&blacklisted).cloned().collect();
     }
 
-    let subjects = load(Path::new("../json_parser/src/test.json")).unwrap();
+    let subjects = load(Path::new("json_parser/src/test.json")).unwrap();
     let optional_subjects = subjects
         .iter()
         .cloned()
         .whitelist_codes(&codes)
         .blacklist_codes(&mandatory)
-        .map(|sub| sub.commissions.clone())
+        .map(|sub| (sub.code.clone(), sub.commissions.clone()))
         .collect_vec();
 
     let mandatory_subjects = subjects
         .iter()
         .cloned()
         .whitelist_codes(&mandatory)
-        .map(|sub| sub.commissions.clone())
+        .map(|sub| (sub.code.clone(), sub.commissions.clone()))
         .collect_vec();
 
-    let options = generate::<SubjectCommision>(mandatory_subjects, optional_subjects);
+    let options = generate(mandatory_subjects, optional_subjects, HashSet::new());
 
     for option in options {
         let subject_count = option.iter().filter_map(|a| a.as_ref()).count();
