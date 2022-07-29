@@ -1,4 +1,4 @@
-use std::ops::RangeInclusive;
+use std::ops::RangeBounds;
 
 use crate::models::SubjectCommision;
 
@@ -35,17 +35,17 @@ pub trait ChoiceIterator: Iterator<Item = Choice> {
 
 impl<I: Iterator<Item = Choice>> ChoiceIterator for I {}
 
-pub struct CreditCount {
-    valid_range: RangeInclusive<u32>,
+pub struct CreditCount<R: RangeBounds<u32>> {
+    valid_range: R,
 }
 
-impl CreditCount {
-    pub fn new(valid_range: RangeInclusive<u32>) -> Self {
+impl<R: RangeBounds<u32>> CreditCount<R> {
+    pub fn new(valid_range: R) -> Self {
         Self { valid_range }
     }
 }
 
-impl ChoiceFilter for CreditCount {
+impl<R: RangeBounds<u32>> ChoiceFilter for CreditCount<R> {
     fn filter(&self, item: &Choice) -> bool {
         let credits = item
             .iter()
@@ -56,17 +56,17 @@ impl ChoiceFilter for CreditCount {
     }
 }
 
-pub struct SubjectCount {
-    valid_range: RangeInclusive<u32>,
+pub struct SubjectCount<R: RangeBounds<u32>> {
+    valid_range: R,
 }
 
-impl SubjectCount {
-    pub fn new(valid_range: RangeInclusive<u32>) -> Self {
+impl<R: RangeBounds<u32>> SubjectCount<R> {
+    pub fn new(valid_range: R) -> Self {
         Self { valid_range }
     }
 }
 
-impl ChoiceFilter for SubjectCount {
+impl<R: RangeBounds<u32>> ChoiceFilter for SubjectCount<R> {
     fn filter(&self, item: &Choice) -> bool {
         let credits = item.iter().flatten().count() as u32;
         self.valid_range.contains(&credits)
