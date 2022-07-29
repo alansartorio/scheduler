@@ -45,7 +45,8 @@ pub fn recursive_generate<'a, K: Hash + Eq + Clone + 'a, T: Collidable + Hash + 
         move |val: T| {
             previously_chosen.iter().any(|(i, previous)| {
                 previous.clone().map_or(false, |previous| {
-                    pair_collisions.contains(&((i.clone(), previous), (chosen_key.clone(), val.clone())))
+                    pair_collisions
+                        .contains(&((i.clone(), previous), (chosen_key.clone(), val.clone())))
                 })
             })
         }
@@ -105,8 +106,15 @@ pub fn generate<'a, K: Hash + Eq + Clone + 'a, T: Collidable + Hash + Eq + Clone
 ) -> Box<dyn Iterator<Item = Vec<Option<T>>> + 'a> {
     let pair_collisions =
         find_pair_collisions(mandatory.iter().cloned().chain(vectors.iter().cloned()));
-    let pair_collisions =
-        HashSet::from_iter(pair_collisions.difference(&collision_exceptions).cloned());
+    let pair_collisions = HashSet::from_iter(
+        pair_collisions
+            .difference(&HashSet::from_iter(
+                collision_exceptions
+                    .into_iter()
+                    .flat_map(|v| [v.clone(), (v.1, v.0)]),
+            ))
+            .cloned(),
+    );
 
     Box::new(
         recursive_generate(
@@ -143,7 +151,7 @@ mod tests {
             generate(
                 vec![("0", vec![sa, sc]),],
                 vec![("1", vec![sa, sb, sc]), ("2", vec![sa, sb,]),],
-                HashSet::from([(("1", sb), ("2", sb))])
+                HashSet::from([(("2", sb), ("1", sb))])
             )
             .collect::<Vec<Vec<_>>>(),
             vec![
