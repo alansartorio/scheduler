@@ -7,6 +7,8 @@ use std::collections::HashSet;
 use std::iter;
 use std::rc::Rc;
 
+pub mod filters;
+
 type CollisionSet<K, T> = HashSet<((K, T), (K, T))>;
 
 fn find_pair_collisions<K: Hash + Eq + Clone, T>(

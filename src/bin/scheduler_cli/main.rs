@@ -1,7 +1,8 @@
 use clap::Parser;
 use itertools::Itertools;
 use scheduler::loaders::json_loader::load;
-use scheduler::models::{Code, SubjectCommision};
+use scheduler::models::Code;
+use scheduler::option_generator::filters::{ChoiceIterator, CreditCount, SubjectCount};
 use scheduler::option_generator::generate;
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -68,14 +69,12 @@ fn main() {
         .map(|sub| (sub.code.clone(), sub.commissions.clone()))
         .collect_vec();
 
-    let options = generate(mandatory_subjects, optional_subjects, HashSet::new());
+    let options = generate(mandatory_subjects, optional_subjects, HashSet::new())
+        .filter_choices(SubjectCount::new(4..=5))
+        .filter_choices(CreditCount::new(20..=30));
 
     for option in options {
-        let subject_count = option.iter().filter_map(|a| a.as_ref()).count();
-        if !(4..=5).contains(&subject_count) {
-            continue;
-        }
-        let filtered = option.iter().filter_map(|a| a.as_ref()).collect_vec();
+        let filtered = option.into_iter().flatten().collect_vec();
 
         println!(
             "{}",
