@@ -97,3 +97,14 @@ impl Subject {
         self.commissions.iter().find(|com| com.name == id)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Code;
+
+    #[test]
+    fn code_to_string() {
+        assert_eq!(Code { high: 3, low: 6 }.to_string(), "03.06");
+        assert_eq!(Code { high: 10, low: 40 }.to_string(), "10.40");
+    }
+}
