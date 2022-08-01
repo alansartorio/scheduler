@@ -108,7 +108,7 @@ pub struct Span {
 pub struct CommissionTime {
     pub day: Day,
     #[serde(rename = "classRoom")]
-    pub classroom: String,
+    pub classroom: Option<String>,
     pub building: String,
     #[serde(flatten)]
     pub span: Span,
@@ -284,7 +284,7 @@ mod tests {
             .unwrap(),
             CommissionTimes(vec![CommissionTime {
                 day: Day::Monday,
-                classroom: "Virtual".to_string(),
+                classroom: Some("Virtual".to_string()),
                 building: "External".to_string(),
                 span: Span {
                     start: Time {
@@ -327,7 +327,7 @@ mod tests {
             CommissionTimes(vec![
                 CommissionTime {
                     day: Day::Monday,
-                    classroom: "Virtual".to_string(),
+                    classroom: Some("Virtual".to_string()),
                     building: "External".to_string(),
                     span: Span {
                         start: Time {
@@ -342,7 +342,7 @@ mod tests {
                 },
                 CommissionTime {
                     day: Day::Wednesday,
-                    classroom: "Virtual".to_string(),
+                    classroom: Some("Virtual".to_string()),
                     building: "External".to_string(),
                     span: Span {
                         start: Time {
@@ -406,7 +406,7 @@ mod tests {
                 enrolled_students: 7,
                 course_commission_times: CommissionTimes(vec![CommissionTime {
                     day: Day::Tuesday,
-                    classroom: "Presencial".to_string(),
+                    classroom: Some("Presencial".to_string()),
                     building: "External".to_string(),
                     span: Span {
                         start: Time {
