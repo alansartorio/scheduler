@@ -40,7 +40,7 @@ pub trait SubjectIterable: Iterator<Item = Arc<Subject>> {
     where
         Self: Sized,
     {
-        self.find(|sub| (*sub).code == code)
+        self.find(|sub| sub.code == code)
     }
 
     fn whitelist_codes(self, codes: &HashSet<Code>) -> Whitelist<Self>

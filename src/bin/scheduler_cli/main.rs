@@ -59,14 +59,14 @@ fn main() {
         .cloned()
         .whitelist_codes(&codes)
         .blacklist_codes(&mandatory)
-        .map(|sub| (sub.code.clone(), sub.commissions.clone()))
+        .map(|sub| (sub.code, sub.commissions.clone()))
         .collect_vec();
 
     let mandatory_subjects = subjects
         .iter()
         .cloned()
         .whitelist_codes(&mandatory)
-        .map(|sub| (sub.code.clone(), sub.commissions.clone()))
+        .map(|sub| (sub.code, sub.commissions.clone()))
         .collect_vec();
 
     let options = generate(mandatory_subjects, optional_subjects, HashSet::new())

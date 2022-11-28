@@ -4,10 +4,12 @@ use crate::models::day::Day;
 use enum_map::{enum_map, Enum, EnumMap};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+#[cfg(feature = "json")]
 use serde::Serialize;
 
-#[derive(Debug, Enum, Clone, Copy, EnumIter, Serialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Enum, Clone, Copy, EnumIter)]
+#[cfg_attr(feature = "json", derive(Serialize))]
+#[cfg_attr(feature = "json", serde(rename_all = "lowercase"))]
 pub enum DaysOfTheWeek {
     Sunday,
     Monday,

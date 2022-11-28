@@ -23,6 +23,11 @@ json_parser = { path = "json_parser", optional = true }
 serde_json = { version = "1.0.82", optional = true }
 clap = { version = "3.2.8", features = ["derive"], optional = true }
 
+[workspace]
+members = [
+    "json_parser",
+]
+
 [features]
 default = ["sqlite", "json"]
 sqlite = ["dep:rusqlite"]
