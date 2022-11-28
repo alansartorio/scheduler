@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{*, career_plan::CareerPlan};
 
 #[test]
 fn deserialize_day() {
@@ -235,7 +235,76 @@ fn deserialize_full() {
 
 #[test]
 fn test_file() {
-    let parsed = serde_json::from_str::<SubjectCommissions>(include_str!("test.json"));
+    let parsed = serde_json::from_str::<SubjectCommissions>(include_str!("commissions.json"));
+
+    dbg!(&parsed);
+    assert!(parsed.is_ok());
+}
+
+#[test]
+fn test_parse_student() {
+    let parsed = serde_json::from_str::<Student>(include_str!("student.json"));
+
+    dbg!(&parsed);
+    assert!(parsed.is_ok());
+
+    let parsed = parsed.unwrap();
+
+    assert_eq!(parsed.code, "66666");
+    assert_eq!(parsed.dni, "44444444");
+    assert_eq!(parsed.career_code, "S");
+    assert_eq!(
+        parsed.active_career_plans,
+        CareerPlans(vec![CareerPlanInfo {
+            name: "S10 A - Rev18".to_owned(),
+            career: "S".to_owned(),
+            degree_level: DegreeLevel::Graduate,
+            since: "2018-00-00T00:00:00-03:00".to_owned(),
+        }])
+    );
+}
+
+#[test]
+fn test_parse_people() {
+    let parsed = serde_json::from_str::<People>(include_str!("people.json"));
+
+    dbg!(&parsed);
+    assert!(parsed.is_ok());
+
+    let parsed = parsed.unwrap();
+
+    assert_eq!(parsed.dni, "44444444");
+    assert_eq!(parsed.first_name, "NOMBRE");
+    assert_eq!(parsed.last_name, "APELLIDO");
+    assert_eq!(parsed.email_itba, "email@example.com");
+    assert_eq!(parsed.links, vec![]);
+}
+
+#[test]
+fn test_parse_simple_plan() {
+    let parsed = serde_json::from_str::<CareerPlan>(
+        r#"{
+            "careerplan": {
+                "name": "P10",
+                "career": "P",
+                "degreeLevel": "GRADUATE",
+                "since": "2018-07-21T00:00:00-03:00",
+                "section": [{
+                    "name": "Section 1",
+                    "terms": null,
+                    "withoutTerm": null
+                }]
+            }
+        }"#,
+    );
+
+    dbg!(&parsed);
+    assert!(parsed.is_ok());
+}
+
+#[test]
+fn test_parse_plan() {
+    let parsed = serde_json::from_str::<CareerPlan>(include_str!("career-plan.json"));
 
     dbg!(&parsed);
     assert!(parsed.is_ok());

@@ -3,6 +3,7 @@ use serde_with::{serde_as, DisplayFromStr};
 use std::error::Error;
 #[cfg(test)]
 mod test;
+mod career_plan;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 pub enum SubjectType {
@@ -30,7 +31,10 @@ impl TryFrom<String> for Code {
             .ok_or_else::<String, _>(|| "Could not split at .".into())?;
         let major = major.parse()?;
         let minor = minor.parse()?;
-        Ok(Self { high: major, low: minor })
+        Ok(Self {
+            high: major,
+            low: minor,
+        })
     }
 }
 
@@ -178,3 +182,103 @@ impl From<OriginalSubjectCommissions> for SubjectCommissions {
         SubjectCommissions(s.course_commissions.course_commission)
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+pub enum DegreeLevel {
+    #[serde(alias = "GRADUATE")]
+    Graduate,
+}
+
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CareerPlanInfo {
+    name: String,
+    career: String,
+    degree_level: DegreeLevel,
+    since: String,
+}
+
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(untagged)]
+enum ActiveCareerPlansEnum {
+    Single(CareerPlanInfo),
+    Multiple(Vec<CareerPlanInfo>),
+}
+
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", from = "Option<ActiveCareerPlansEnum>")]
+struct InnerCareerPlans {
+    career_plans: Vec<CareerPlanInfo>,
+}
+
+
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct OriginalCareerPlans {
+    career_plans: InnerCareerPlans,
+}
+
+
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(from = "OriginalCareerPlans")]
+pub struct CareerPlans(pub Vec<CareerPlanInfo>);
+
+impl From<Option<ActiveCareerPlansEnum>> for InnerCareerPlans {
+    fn from(career_plans: Option<ActiveCareerPlansEnum>) -> Self {
+        InnerCareerPlans {
+            career_plans: match career_plans {
+                Some(career_plans) => match career_plans {
+                    ActiveCareerPlansEnum::Single(career_plan) => vec![career_plan],
+                    ActiveCareerPlansEnum::Multiple(career_plans) => career_plans,
+                },
+                None => vec![],
+            },
+        }
+    }
+}
+
+impl From<OriginalCareerPlans> for CareerPlans {
+    fn from(og: OriginalCareerPlans) -> Self {
+        Self(og.career_plans.career_plans)
+    }
+}
+
+#[serde_as]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Link {
+    rel: String,
+    href: String,
+}
+
+#[serde_as]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Student {
+    code: String,
+    dni: String,
+    civic_id: String,
+    career: String,
+    career_code: String,
+    active_career_plans: CareerPlans,
+    plan: String,
+    email: String,
+    start_year: String,
+    start_period: String,
+    student_type: String,
+    links: Vec<Link>,
+}
+
+#[serde_as]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct People {
+    dni: String,
+    first_name: String,
+    last_name: String,
+    email_itba: String,
+    links: Vec<Link>,
+}
+
+
+
