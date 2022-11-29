@@ -222,10 +222,10 @@ pub enum DegreeLevel {
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CareerPlanInfo {
-    name: String,
-    career: String,
-    degree_level: DegreeLevel,
-    since: String,
+    pub name: String,
+    pub career: String,
+    pub degree_level: DegreeLevel,
+    pub since: String,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -275,35 +275,35 @@ impl From<OriginalCareerPlans> for CareerPlans {
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Link {
-    rel: String,
-    href: String,
+    pub rel: String,
+    pub href: String,
 }
 
 #[serde_as]
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Student {
-    code: String,
-    dni: String,
-    civic_id: String,
-    career: String,
-    career_code: String,
-    active_career_plans: CareerPlans,
-    plan: String,
-    email: String,
-    start_year: String,
-    start_period: String,
-    student_type: String,
-    links: Vec<Link>,
+    pub code: String,
+    pub dni: String,
+    pub civic_id: String,
+    pub career: String,
+    pub career_code: String,
+    pub active_career_plans: CareerPlans,
+    pub plan: String,
+    pub email: String,
+    pub start_year: String,
+    pub start_period: String,
+    pub student_type: String,
+    pub links: Vec<Link>,
 }
 
 #[serde_as]
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct People {
-    dni: String,
-    first_name: String,
-    last_name: String,
-    email_itba: String,
-    links: Vec<Link>,
+    pub dni: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub email_itba: String,
+    pub links: Vec<Link>,
 }
