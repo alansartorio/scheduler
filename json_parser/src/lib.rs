@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
-use std::error::Error;
+use std::{error::Error, str::FromStr, fmt::{Display, Debug}};
 mod career_plan;
 #[cfg(test)]
 mod test;
@@ -17,7 +17,7 @@ pub enum SubjectType {
     Seminary,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(try_from = "String", into = "String")]
 pub struct Code {
     pub high: u8,
@@ -43,6 +43,28 @@ impl TryFrom<String> for Code {
 impl From<Code> for String {
     fn from(code: Code) -> Self {
         format!("{:02}.{:02}", code.high, code.low)
+    }
+}
+
+impl FromStr for Code {
+    type Err = Box<dyn Error>;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (high, low) = s
+            .split_once('.')
+            .ok_or("Subject Code must contain a dot.")?;
+        let high: u8 = high.parse()?;
+        let low: u8 = low.parse()?;
+        Ok(Code { high, low })
+    }
+}
+impl Display for Code {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:02}.{:02}", self.high, self.low)
+    }
+}
+impl Debug for Code {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
     }
 }
 

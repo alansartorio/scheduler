@@ -1,3 +1,5 @@
+pub use json_parser::Code;
+
 use crate::models::{Collidable, Week};
 pub use std::{error::Error, rc::Rc, str::FromStr, string::ParseError};
 use std::{
@@ -50,33 +52,6 @@ impl PartialEq for SubjectCommision {
     }
 }
 impl Eq for SubjectCommision {}
-
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
-pub struct Code {
-    pub high: u8,
-    pub low: u8,
-}
-impl FromStr for Code {
-    type Err = Box<dyn Error>;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (high, low) = s
-            .split_once('.')
-            .ok_or("Subject Code must contain a dot.")?;
-        let high: u8 = high.parse()?;
-        let low: u8 = low.parse()?;
-        Ok(Code { high, low })
-    }
-}
-impl Display for Code {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:02}.{:02}", self.high, self.low)
-    }
-}
-impl Debug for Code {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self)
-    }
-}
 
 #[derive(Debug, Hash, PartialEq)]
 pub struct Subject {
