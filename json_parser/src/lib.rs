@@ -5,6 +5,8 @@ use std::error::Error;
 mod test;
 mod career_plan;
 
+pub use career_plan::CareerPlan;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 pub enum SubjectType {
     #[serde(alias = "ANNUAL")]
