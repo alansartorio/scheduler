@@ -5,7 +5,7 @@ mod career_plan;
 #[cfg(test)]
 mod test;
 
-pub use career_plan::CareerPlan;
+pub use career_plan::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 pub enum SubjectType {
