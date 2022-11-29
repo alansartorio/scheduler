@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 use std::error::Error;
+mod career_plan;
 #[cfg(test)]
 mod test;
-mod career_plan;
 
 pub use career_plan::CareerPlan;
 
@@ -17,8 +17,8 @@ pub enum SubjectType {
     Seminary,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(try_from = "String")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(try_from = "String", into = "String")]
 pub struct Code {
     pub high: u8,
     pub low: u8,
@@ -37,6 +37,12 @@ impl TryFrom<String> for Code {
             high: major,
             low: minor,
         })
+    }
+}
+
+impl From<Code> for String {
+    fn from(code: Code) -> Self {
+        format!("{:02}.{:02}", code.high, code.low)
     }
 }
 
@@ -213,13 +219,11 @@ struct InnerCareerPlans {
     career_plans: Vec<CareerPlanInfo>,
 }
 
-
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct OriginalCareerPlans {
     career_plans: InnerCareerPlans,
 }
-
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(from = "OriginalCareerPlans")]
@@ -281,6 +285,3 @@ pub struct People {
     email_itba: String,
     links: Vec<Link>,
 }
-
-
-

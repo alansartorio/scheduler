@@ -1,4 +1,4 @@
-use crate::{*, career_plan::CareerPlan};
+use crate::{career_plan::CareerPlan, *};
 
 #[test]
 fn deserialize_day() {
@@ -58,6 +58,24 @@ fn deserialize_code() {
     assert_eq!(
         serde_json::from_str::<Code>("\"14.12\"").unwrap(),
         Code { high: 14, low: 12 }
+    );
+}
+
+#[test]
+fn serialize_code() {
+    assert_eq!(
+        serde_json::to_string(&Code { high: 0, low: 0 }).unwrap(),
+        "\"00.00\"",
+    );
+
+    assert_eq!(
+        serde_json::to_string(&Code { high: 4, low: 10 }).unwrap(),
+        "\"04.10\"",
+    );
+
+    assert_eq!(
+        serde_json::to_string(&Code { high: 14, low: 12 }).unwrap(),
+        "\"14.12\"",
     );
 }
 
