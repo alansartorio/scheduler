@@ -5,6 +5,7 @@ use crate::models::{Code, Week};
 use enum_map::enum_map;
 use itertools::Itertools;
 use rusqlite::{named_params, Connection};
+use std::collections::HashSet;
 use std::error::Error;
 use std::sync::{Arc, Weak};
 
@@ -38,9 +39,9 @@ fn query_tasks_for_day(
                         row.get::<_, String>(5).unwrap().parse().unwrap(),
                     ),
                     TaskInfo {
-                        building: Building {
+                        building: HashSet::from_iter([Building {
                             name: row.get(1).ok(),
-                        },
+                        }]),
                         subject: subject.clone(),
                     },
                 ))

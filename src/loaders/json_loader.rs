@@ -1,6 +1,7 @@
 use crate::models::*;
 use enum_map::enum_map;
 use itertools::Itertools;
+use std::collections::HashSet;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
@@ -42,9 +43,9 @@ fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Arc<Subject>>, Box
                                             ),
                                             TaskInfo {
                                                 subject: sub.clone(),
-                                                building: Building {
+                                                building: HashSet::from_iter([Building {
                                                     name: Some(t.building.clone())
-                                                }
+                                                }])
                                             }
                                     )
                                     ).collect_vec())

@@ -20,7 +20,7 @@ pub enum DaysOfTheWeek {
     Saturday,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Week<T> {
     pub days: EnumMap<DaysOfTheWeek, Day<T>>,
 }
@@ -56,3 +56,4 @@ impl<T> Collidable for Week<T> {
         false
     }
 }
+

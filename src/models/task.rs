@@ -1,6 +1,6 @@
 use super::span::Span;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Task<T> {
     pub span: Span,
     pub info: T,

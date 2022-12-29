@@ -1,12 +1,14 @@
 pub use json_parser::Code;
 
 use crate::models::{Collidable, Week};
-pub use std::{error::Error, rc::Rc, str::FromStr, string::ParseError};
 use std::{
+    collections::HashSet,
     fmt::{Debug, Display},
     hash::Hash,
+    ops::Add,
     sync::Weak,
 };
+pub use std::{error::Error, rc::Rc, str::FromStr, string::ParseError};
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Building {
@@ -16,7 +18,22 @@ pub struct Building {
 #[derive(Debug, Clone)]
 pub struct TaskInfo {
     pub subject: Weak<Subject>,
-    pub building: Building,
+    pub building: HashSet<Building>,
+}
+
+impl Add for TaskInfo {
+    type Output = TaskInfo;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        assert!(self.subject.ptr_eq(&rhs.subject));
+        let mut new_building = HashSet::new();
+        new_building.extend(self.building.into_iter());
+        new_building.extend(rhs.building.into_iter());
+        TaskInfo {
+            subject: self.subject.clone(),
+            building: new_building,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

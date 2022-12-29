@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 use super::{collidable::Collidable, combinable::Combinable, task::Task};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Day<T> {
     pub tasks: Vec<Task<T>>,
     has_collisions: bool,
@@ -36,7 +36,7 @@ impl<T> Day<T> {
             tasks,
             has_collisions: false,
         };
-        day.has_collisions = day.has_collisions();
+        day.has_collisions = day.calculate_has_collisions();
         day
     }
 
@@ -44,13 +44,21 @@ impl<T> Day<T> {
         Self::new(vec![])
     }
 
-    pub fn has_collisions(&self) -> bool {
+    fn calculate_has_collisions(&self) -> bool {
         for (task1, task2) in self.tasks.iter().tuple_windows() {
             if task1.span.collides(&task2.span) {
                 return true;
             }
         }
         false
+    }
+
+    pub fn update_has_collissions(&mut self) {
+        self.has_collisions = self.calculate_has_collisions();
+    }
+
+    pub fn has_collisions(&self) -> bool {
+        self.has_collisions
     }
 }
 
