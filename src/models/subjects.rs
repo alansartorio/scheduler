@@ -25,7 +25,7 @@ pub struct TaskInfo {
 
 impl PartialEq for TaskInfo {
     fn eq(&self, other: &Self) -> bool {
-        self.building == other.building && self.subject.ptr_eq(&other.subject)
+        self.building == other.building
     }
 }
 
@@ -73,12 +73,7 @@ impl Hash for SubjectCommision {
 }
 impl PartialEq for SubjectCommision {
     fn eq(&self, other: &Self) -> bool {
-        self.names.eq(&other.names)
-            && self
-                .subject
-                .upgrade()
-                .unwrap()
-                .eq(&other.subject.upgrade().unwrap())
+        self.names.eq(&other.names) && self.schedule == other.schedule
     }
 }
 impl Eq for SubjectCommision {}
@@ -242,5 +237,27 @@ mod tests {
         });
 
         subject.borrow_mut().optimize();
+
+        let subject_2 = Arc::new_cyclic(|subject| {
+            RefCell::new(Subject {
+                code: "00.00".parse().unwrap(),
+                name: "Nombre".to_owned(),
+                commissions: vec![
+                    SubjectCommision {
+                        subject: subject.clone(),
+                        names: vec!["Com A".to_owned(), "Com B".to_owned()],
+                        schedule: week_1(subject),
+                    },
+                    SubjectCommision {
+                        subject: subject.clone(),
+                        names: vec!["Com C".to_owned()],
+                        schedule: week_3(subject),
+                    },
+                ],
+                credits: 3,
+            })
+        });
+
+        assert_eq!(subject, subject_2,);
     }
 }

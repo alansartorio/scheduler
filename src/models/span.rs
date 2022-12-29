@@ -1,8 +1,8 @@
 use super::collidable::Collidable;
 use super::time::Time;
-use std::fmt::Display;
+use std::fmt::{Display, Debug};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Span {
     pub start: Time,
     pub end: Time,
@@ -22,6 +22,12 @@ impl Span {
 impl Display for Span {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} - {}", self.start, self.end)
+    }
+}
+
+impl Debug for Span {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{self}"))
     }
 }
 
