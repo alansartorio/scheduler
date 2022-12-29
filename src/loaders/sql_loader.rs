@@ -5,12 +5,13 @@ use crate::models::{Code, Week};
 use enum_map::enum_map;
 use itertools::Itertools;
 use rusqlite::{named_params, Connection};
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::error::Error;
 use std::sync::{Arc, Weak};
 
 fn query_tasks_for_day(
-    subject: &Weak<Subject>,
+    subject: &Weak<RefCell<Subject>>,
     connection: &Connection,
     commission_id: String,
     day: DaysOfTheWeek,
@@ -53,7 +54,7 @@ fn query_tasks_for_day(
 }
 
 fn query_subject_commissions(
-    subject: &Weak<Subject>,
+    subject: &Weak<RefCell<Subject>>,
     connection: &Connection,
     subject_code: String,
 ) -> Vec<SubjectCommision> {
@@ -66,7 +67,7 @@ fn query_subject_commissions(
             },
             |row| {
                 Ok(SubjectCommision {
-                    name: row.get(1).unwrap(),
+                    names: vec![row.get(1).unwrap()],
                     schedule: Week::new(enum_map! {
                         day => Day::new(
                             query_tasks_for_day(subject, connection, row.get(2).unwrap(), day)
@@ -82,7 +83,7 @@ fn query_subject_commissions(
         .collect()
 }
 
-pub fn load() -> Result<Vec<Arc<Subject>>, Box<dyn Error>> {
+pub fn load() -> Result<Vec<Arc<RefCell<Subject>>>, Box<dyn Error>> {
     let connection = rusqlite::Connection::open_with_flags(
         "../data/database.db",
         rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
@@ -103,12 +104,12 @@ pub fn load() -> Result<Vec<Arc<Subject>>, Box<dyn Error>> {
                     .flat_map(|s| &s.tasks)
                     .map(|t| (t.span.duration() / 60) as u8)
                     .sum();
-                Subject {
+                RefCell::new(Subject {
                     code,
                     name,
                     credits,
                     commissions,
-                }
+                })
             }))
         })?
         .map(Result::unwrap)

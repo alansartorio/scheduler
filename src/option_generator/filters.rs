@@ -50,7 +50,7 @@ impl<R: RangeBounds<u32>> ChoiceFilter for CreditCount<R> {
         let credits = item
             .iter()
             .flatten()
-            .map(|c| c.subject.upgrade().unwrap().credits as u32)
+            .map(|c| c.subject.upgrade().unwrap().borrow().credits as u32)
             .sum();
         self.valid_range.contains(&credits)
     }

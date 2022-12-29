@@ -1,11 +1,14 @@
-use super::collidable::Collidable;
+use std::ops::Add;
+
 use super::combinable::Combinable;
+use super::Span;
+use super::{collidable::Collidable, Task};
 use crate::models::day::Day;
 use enum_map::{enum_map, Enum, EnumMap};
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 #[cfg(feature = "json")]
 use serde::Serialize;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 #[derive(Debug, Enum, Clone, Copy, EnumIter)]
 #[cfg_attr(feature = "json", derive(Serialize))]
@@ -36,6 +39,35 @@ impl<T> Week<T> {
         })
     }
 }
+
+impl<T: Add<Output = T> + Clone> Week<T> {
+    pub fn simplify(&mut self) {
+        for (_, day) in self.days.iter_mut().filter(|(_, day)| day.has_collisions()) {
+            let mut new_tasks: Vec<Task<T>> = vec![];
+            for task in day.tasks.drain(..) {
+                if let Some(last) = new_tasks.last_mut() {
+                    if last.span.collides(&task.span) {
+                        let start = task.span.start.min(last.span.start);
+                        let end = task.span.end.max(last.span.end);
+
+                        let info = task.info + last.info.clone();
+
+                        let new_task = Task::new(Span::new(start, end), info);
+
+                        *last = new_task;
+                    } else {
+                        new_tasks.push(task)
+                    }
+                } else {
+                    new_tasks.push(task)
+                }
+            }
+
+            day.tasks.extend(new_tasks);
+        }
+    }
+}
+
 impl<T: Clone> Combinable for Week<T> {
     fn combine(&self, other: &Self) -> Self {
         Week::new(enum_map! {
@@ -57,3 +89,45 @@ impl<T> Collidable for Week<T> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{Day, DaysOfTheWeek, Span};
+    use enum_map::enum_map;
+
+    #[test]
+    fn test_simplify_week() {
+        let ta = "00:00".parse().unwrap();
+        let tb = "01:00".parse().unwrap();
+        let tc = "02:00".parse().unwrap();
+        let td = "03:00".parse().unwrap();
+        let task_a = Task::new(Span::new(ta, tb), 1);
+        let task_b = Task::new(Span::new(ta, tc), 2);
+        let task_c = Task::new(Span::new(tc, td), 4);
+
+        let mut week = Week::new(enum_map! {
+            DaysOfTheWeek::Monday => Day::new(vec![
+                task_a,
+                task_b,
+                task_c
+            ]),
+            _ => Day::new(vec![])
+        });
+
+        week.simplify();
+        week.days
+            .iter_mut()
+            .for_each(|(_, day)| day.update_has_collissions());
+
+        assert_eq!(
+            week,
+            Week::new(enum_map! {
+                DaysOfTheWeek::Monday => Day::new(vec![
+                    Task::new(Span::new(ta, tc), 3),
+                    task_c
+                ]),
+                _ => Day::new(vec![])
+            })
+        )
+    }
+}

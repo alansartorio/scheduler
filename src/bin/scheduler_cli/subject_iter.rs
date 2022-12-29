@@ -1,46 +1,46 @@
 use scheduler::models::{Code, Subject};
-use std::{collections::HashSet, sync::Arc};
+use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
-pub struct Whitelist<'a, I: Iterator<Item = Arc<Subject>>> {
+pub struct Whitelist<'a, I: Iterator<Item = Arc<RefCell<Subject>>>> {
     iter: I,
     list: &'a HashSet<Code>,
 }
-impl<'a, I: Iterator<Item = Arc<Subject>>> Whitelist<'a, I> {
+impl<'a, I: Iterator<Item = Arc<RefCell<Subject>>>> Whitelist<'a, I> {
     pub fn new(iter: I, list: &'a HashSet<Code>) -> Self {
         Self { iter, list }
     }
 }
-impl<'a, I: Iterator<Item = Arc<Subject>>> Iterator for Whitelist<'a, I> {
-    type Item = Arc<Subject>;
+impl<'a, I: Iterator<Item = Arc<RefCell<Subject>>>> Iterator for Whitelist<'a, I> {
+    type Item = Arc<RefCell<Subject>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.find(|i| self.list.contains(&i.code))
+        self.iter.find(|i| self.list.contains(&i.borrow().code))
     }
 }
 
-pub struct Blacklist<'a, I: Iterator<Item = Arc<Subject>>> {
+pub struct Blacklist<'a, I: Iterator<Item = Arc<RefCell<Subject>>>> {
     iter: I,
     list: &'a HashSet<Code>,
 }
-impl<'a, I: Iterator<Item = Arc<Subject>>> Blacklist<'a, I> {
+impl<'a, I: Iterator<Item = Arc<RefCell<Subject>>>> Blacklist<'a, I> {
     pub fn new(iter: I, list: &'a HashSet<Code>) -> Self {
         Self { iter, list }
     }
 }
-impl<'a, I: Iterator<Item = Arc<Subject>>> Iterator for Blacklist<'a, I> {
-    type Item = Arc<Subject>;
+impl<'a, I: Iterator<Item = Arc<RefCell<Subject>>>> Iterator for Blacklist<'a, I> {
+    type Item = Arc<RefCell<Subject>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.find(|i| !self.list.contains(&i.code))
+        self.iter.find(|i| !self.list.contains(&i.borrow().code))
     }
 }
 
-pub trait SubjectIterable: Iterator<Item = Arc<Subject>> {
-    fn get_by_code(&mut self, code: Code) -> Option<Arc<Subject>>
+pub trait SubjectIterable: Iterator<Item = Arc<RefCell<Subject>>> {
+    fn get_by_code(&mut self, code: Code) -> Option<Arc<RefCell<Subject>>>
     where
         Self: Sized,
     {
-        self.find(|sub| sub.code == code)
+        self.find(|sub| sub.borrow().code == code)
     }
 
     fn whitelist_codes(self, codes: &HashSet<Code>) -> Whitelist<Self>
@@ -58,4 +58,4 @@ pub trait SubjectIterable: Iterator<Item = Arc<Subject>> {
     }
 }
 
-impl<T: Iterator<Item = Arc<Subject>>> SubjectIterable for T {}
+impl<T: Iterator<Item = Arc<RefCell<Subject>>>> SubjectIterable for T {}

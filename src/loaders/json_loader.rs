@@ -1,6 +1,7 @@
 use crate::models::*;
 use enum_map::enum_map;
 use itertools::Itertools;
+use std::cell::RefCell;
 use std::collections::HashSet;
 use std::error::Error;
 use std::fs::File;
@@ -8,7 +9,9 @@ use std::io::Read;
 use std::path::Path;
 use std::sync::Arc;
 
-fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Arc<Subject>>, Box<dyn Error>> {
+fn map(
+    parsed: json_parser::SubjectCommissions,
+) -> Result<Vec<Arc<RefCell<Subject>>>, Box<dyn Error>> {
     Ok(parsed
         .0
         .iter()
@@ -20,7 +23,7 @@ fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Arc<Subject>>, Box
                 let commissions = list
                     .iter()
                     .map(|c| SubjectCommision {
-                        name: c.commission_name.clone(),
+                        names: vec![c.commission_name.clone()],
                         subject: sub.clone(),
                         schedule: Week::new(enum_map! {
                             day => {
@@ -60,7 +63,7 @@ fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Arc<Subject>>, Box
                     .flat_map(|s| &s.tasks)
                     .map(|t| (t.span.duration() / 60) as u8)
                     .sum();
-                Subject {
+                RefCell::new(Subject {
                     code: Code {
                         high: code.high,
                         low: code.low,
@@ -68,23 +71,23 @@ fn map(parsed: json_parser::SubjectCommissions) -> Result<Vec<Arc<Subject>>, Box
                     name: name.clone(),
                     credits,
                     commissions,
-                }
+                })
             })
         })
         .collect_vec())
 }
 
-pub fn load(path: &Path) -> Result<Vec<Arc<Subject>>, Box<dyn Error>> {
+pub fn load(path: &Path) -> Result<Vec<Arc<RefCell<Subject>>>, Box<dyn Error>> {
     let reader = File::open(path)?;
     load_from_reader(reader)
 }
 
-pub fn load_from_reader<R: Read>(reader: R) -> Result<Vec<Arc<Subject>>, Box<dyn Error>> {
+pub fn load_from_reader<R: Read>(reader: R) -> Result<Vec<Arc<RefCell<Subject>>>, Box<dyn Error>> {
     let parsed: json_parser::SubjectCommissions = serde_json::from_reader(reader)?;
     map(parsed)
 }
 
-pub fn load_from_string(string: &str) -> Result<Vec<Arc<Subject>>, Box<dyn Error>> {
+pub fn load_from_string(string: &str) -> Result<Vec<Arc<RefCell<Subject>>>, Box<dyn Error>> {
     let parsed = serde_json::from_str(string)?;
     map(parsed)
 }
