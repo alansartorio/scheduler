@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
-use std::{error::Error, str::FromStr, fmt::{Display, Debug}};
+use std::{
+    error::Error,
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 mod career_plan;
 #[cfg(test)]
 mod test;

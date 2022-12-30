@@ -1,6 +1,6 @@
 use super::collidable::Collidable;
 use super::time::Time;
-use std::fmt::{Display, Debug};
+use std::fmt::{Debug, Display};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Span {
