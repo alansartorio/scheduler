@@ -132,8 +132,8 @@ impl Subject {
                 .drain(..)
                 .into_group_map_by(|com| com.schedule.clone());
             eq_groups
-                .into_iter()
-                .map(|(_, group)| group.into_iter().reduce(|a, b| (&a | &b)).unwrap())
+                .into_values()
+                .map(|group| group.into_iter().reduce(|a, b| (&a | &b)).unwrap())
                 .collect_vec()
         };
 
