@@ -46,7 +46,7 @@ fn map(
                                             ),
                                             TaskInfo {
                                                 subject: sub.clone(),
-                                                building: HashSet::from_iter([Building {
+                                                buildings: HashSet::from_iter([Building {
                                                     name: t.building.clone()
                                                 }])
                                             }

@@ -20,12 +20,12 @@ pub struct Building {
 #[derive(Debug, Clone)]
 pub struct TaskInfo {
     pub subject: Weak<RefCell<Subject>>,
-    pub building: HashSet<Building>,
+    pub buildings: HashSet<Building>,
 }
 
 impl PartialEq for TaskInfo {
     fn eq(&self, other: &Self) -> bool {
-        self.building == other.building
+        self.buildings == other.buildings
     }
 }
 
@@ -33,7 +33,7 @@ impl Eq for TaskInfo {}
 
 impl Hash for TaskInfo {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.building.iter().for_each(|b| b.hash(state))
+        self.buildings.iter().for_each(|b| b.hash(state))
     }
 }
 
@@ -43,11 +43,11 @@ impl Add for TaskInfo {
     fn add(self, rhs: Self) -> Self::Output {
         assert!(self.subject.ptr_eq(&rhs.subject));
         let mut new_building = HashSet::new();
-        new_building.extend(self.building.into_iter());
-        new_building.extend(rhs.building.into_iter());
+        new_building.extend(self.buildings.into_iter());
+        new_building.extend(rhs.buildings.into_iter());
         TaskInfo {
             subject: self.subject,
-            building: new_building,
+            buildings: new_building,
         }
     }
 }
@@ -168,7 +168,7 @@ mod tests {
                 Span::new(ta, tb),
                 TaskInfo {
                     subject: subject.clone(),
-                    building: HashSet::from_iter(building.clone()),
+                    buildings: HashSet::from_iter(building.clone()),
                 },
             )
         };
@@ -177,7 +177,7 @@ mod tests {
                 Span::new(ta, tb),
                 TaskInfo {
                     subject: subject.clone(),
-                    building: HashSet::from_iter(building.clone()),
+                    buildings: HashSet::from_iter(building.clone()),
                 },
             )
         };
@@ -186,7 +186,7 @@ mod tests {
                 Span::new(tb, tc),
                 TaskInfo {
                     subject: subject.clone(),
-                    building: HashSet::from_iter(building.clone()),
+                    buildings: HashSet::from_iter(building.clone()),
                 },
             )
         };

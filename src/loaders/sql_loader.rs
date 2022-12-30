@@ -40,7 +40,7 @@ fn query_tasks_for_day(
                         row.get::<_, String>(5).unwrap().parse().unwrap(),
                     ),
                     TaskInfo {
-                        building: row
+                        buildings: row
                             .get(1)
                             .ok()
                             .map(|b| HashSet::from_iter([Building { name: b }]))
