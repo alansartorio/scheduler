@@ -40,9 +40,11 @@ fn query_tasks_for_day(
                         row.get::<_, String>(5).unwrap().parse().unwrap(),
                     ),
                     TaskInfo {
-                        building: HashSet::from_iter([Building {
-                            name: row.get(1).ok(),
-                        }]),
+                        building: row
+                            .get(1)
+                            .ok()
+                            .map(|b| HashSet::from_iter([Building { name: b }]))
+                            .unwrap_or_else(HashSet::new),
                         subject: subject.clone(),
                     },
                 ))

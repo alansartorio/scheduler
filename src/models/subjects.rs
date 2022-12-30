@@ -14,7 +14,7 @@ pub use std::{error::Error, rc::Rc, str::FromStr, string::ParseError};
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Building {
-    pub name: Option<String>,
+    pub name: String,
 }
 
 #[derive(Debug, Clone)]
@@ -162,13 +162,13 @@ mod tests {
         let ta = "00:00".parse().unwrap();
         let tb = "01:00".parse().unwrap();
         let tc = "02:00".parse().unwrap();
-        let building = Building { name: None };
+        let building = [];
         let task_a_1 = |subject: &Weak<RefCell<Subject>>| {
             Task::new(
                 Span::new(ta, tb),
                 TaskInfo {
                     subject: subject.clone(),
-                    building: HashSet::from_iter([building.clone()]),
+                    building: HashSet::from_iter(building.clone()),
                 },
             )
         };
@@ -177,7 +177,7 @@ mod tests {
                 Span::new(ta, tb),
                 TaskInfo {
                     subject: subject.clone(),
-                    building: HashSet::from_iter([building.clone()]),
+                    building: HashSet::from_iter(building.clone()),
                 },
             )
         };
@@ -186,7 +186,7 @@ mod tests {
                 Span::new(tb, tc),
                 TaskInfo {
                     subject: subject.clone(),
-                    building: HashSet::from_iter([building.clone()]),
+                    building: HashSet::from_iter(building.clone()),
                 },
             )
         };
@@ -266,6 +266,19 @@ mod tests {
             })
         });
 
-        assert_eq!(subject, subject_2,);
+        assert_eq!(
+            subject
+                .borrow()
+                .commissions
+                .iter()
+                .map(|c| c.names.iter().sorted().collect_vec())
+                .collect::<HashSet<_>>(),
+            subject_2
+                .borrow()
+                .commissions
+                .iter()
+                .map(|c| c.names.iter().sorted().collect_vec())
+                .collect::<HashSet<_>>(),
+        );
     }
 }
