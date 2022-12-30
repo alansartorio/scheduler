@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 use super::{collidable::Collidable, combinable::Combinable, task::Task};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Day<T> {
     pub tasks: Vec<Task<T>>,
     has_collisions: bool,

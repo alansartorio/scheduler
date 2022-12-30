@@ -29,6 +29,14 @@ impl PartialEq for TaskInfo {
     }
 }
 
+impl Eq for TaskInfo {}
+
+impl Hash for TaskInfo {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.building.iter().for_each(|b| b.hash(state))
+    }
+}
+
 impl Add for TaskInfo {
     type Output = TaskInfo;
 
@@ -122,7 +130,7 @@ impl Subject {
             let eq_groups = self
                 .commissions
                 .drain(..)
-                .group_by(|com| com.schedule.clone());
+                .into_group_map_by(|com| com.schedule.clone());
             eq_groups
                 .into_iter()
                 .map(|(_, group)| group.into_iter().reduce(|a, b| (&a | &b)).unwrap())
@@ -221,12 +229,12 @@ mod tests {
                     SubjectCommision {
                         subject: subject.clone(),
                         names: vec!["Com B".to_owned()],
-                        schedule: week_2(subject),
+                        schedule: week_3(subject),
                     },
                     SubjectCommision {
                         subject: subject.clone(),
                         names: vec!["Com C".to_owned()],
-                        schedule: week_3(subject),
+                        schedule: week_2(subject),
                     },
                 ],
 
@@ -245,13 +253,13 @@ mod tests {
                 commissions: vec![
                     SubjectCommision {
                         subject: subject.clone(),
-                        names: vec!["Com A".to_owned(), "Com B".to_owned()],
-                        schedule: week_1(subject),
+                        names: vec!["Com B".to_owned()],
+                        schedule: week_3(subject),
                     },
                     SubjectCommision {
                         subject: subject.clone(),
-                        names: vec!["Com C".to_owned()],
-                        schedule: week_3(subject),
+                        names: vec!["Com A".to_owned(), "Com C".to_owned()],
+                        schedule: week_1(subject),
                     },
                 ],
                 credits: 3,

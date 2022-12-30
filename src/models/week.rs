@@ -23,7 +23,7 @@ pub enum DaysOfTheWeek {
     Saturday,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Week<T> {
     pub days: EnumMap<DaysOfTheWeek, Day<T>>,
 }
