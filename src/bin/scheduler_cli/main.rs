@@ -3,7 +3,7 @@ use itertools::Itertools;
 use scheduler::loaders::json_loader::load;
 use scheduler::models::Code;
 use scheduler::option_generator::filters::{ChoiceIterator, CreditCount, SubjectCount};
-use scheduler::option_generator::generate;
+use scheduler::option_generator::OptionGenerator;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::fs::read_to_string;
@@ -72,7 +72,12 @@ fn main() {
         .map(|sub| (sub.borrow().code, sub.borrow().commissions.clone()))
         .collect_vec();
 
-    let options = generate(mandatory_subjects, optional_subjects, HashSet::new())
+    let mut generator = OptionGenerator::default();
+    generator
+        .set_mandatory(mandatory_subjects)
+        .set_optional(optional_subjects);
+    let options = generator
+        .generate()
         .filter_choices(SubjectCount::new(4..=5))
         .filter_choices(CreditCount::new(20..=30));
 
