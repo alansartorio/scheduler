@@ -1,4 +1,23 @@
+use serde::Deserialize;
 use crate::{career_plan::CareerPlan, *};
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+struct BadListTest (    
+    #[serde(deserialize_with = "from_bad_list")]
+    Vec<i64>
+);
+
+#[test]
+fn deserialize_bad_list() {
+    let v: BadListTest = serde_json::from_str("null").unwrap();
+    assert_eq!(v, BadListTest(vec![]));
+    let v: BadListTest = serde_json::from_str(r#"{"list": 12}"#).unwrap();
+    assert_eq!(v, BadListTest(vec![12]));
+    let v: BadListTest = serde_json::from_str(r#"{"list": [14, 15]}"#).unwrap();
+    assert_eq!(v, BadListTest(vec![14, 15]));
+    let v: BadListTest = serde_json::from_str(r#"{"list": null}"#).unwrap();
+    assert_eq!(v, BadListTest(vec![]));
+}
 
 #[test]
 fn deserialize_day() {
@@ -325,5 +344,5 @@ fn test_parse_plan() {
     let parsed = serde_json::from_str::<CareerPlan>(include_str!("career-plan.json"));
 
     dbg!(&parsed);
-    assert!(parsed.is_ok());
+    parsed.unwrap();
 }

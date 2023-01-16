@@ -1,6 +1,43 @@
+use std::collections::HashMap;
+
 use crate::{Code, DegreeLevel};
-use serde::Deserialize;
+use serde::{de::Error, Deserialize, Deserializer};
 use serde_with::{serde_as, DisplayFromStr};
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+enum BadList<T> {
+    Multiple(Vec<T>),
+    Single(T),
+    None,
+}
+
+impl<T> From<BadList<T>> for Vec<T> {
+    fn from(bad: BadList<T>) -> Self {
+        match bad {
+            BadList::Multiple(l) => l,
+            BadList::Single(e) => vec![e],
+            BadList::None => vec![],
+        }
+    }
+}
+
+pub fn from_bad_list<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    let l: Option<HashMap<&str, BadList<T>>> = Deserialize::deserialize(deserializer)?;
+
+    match l {
+        Some(e) => e
+            .into_values()
+            .next()
+            .map(Into::into)
+            .ok_or_else(|| D::Error::custom("Map did not contain any key.")),
+        None => Ok(vec![]),
+    }
+}
 
 #[serde_as]
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -36,25 +73,6 @@ impl From<DependenciesEnum> for InnerDependencies {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct OriginalDependencies {
-    dependency: InnerDependencies,
-}
-
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase", from = "Option<OriginalDependencies>")]
-pub struct Dependencies(pub Vec<Code>);
-
-impl From<Option<OriginalDependencies>> for Dependencies {
-    fn from(og: Option<OriginalDependencies>) -> Self {
-        Dependencies(match og {
-            Some(og) => og.dependency.dependencies,
-            None => vec![],
-        })
-    }
-}
-
 #[serde_as]
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -63,7 +81,8 @@ pub struct SubjectEntry {
     pub code: Code,
     #[serde_as(as = "DisplayFromStr")]
     pub credits: u8,
-    pub dependencies: Dependencies,
+    #[serde(deserialize_with = "from_bad_list")]
+    pub dependencies: Vec<Code>,
 }
 
 #[serde_as]
@@ -73,7 +92,8 @@ pub struct SectionEntry {
     pub name: String,
     #[serde_as(as = "DisplayFromStr")]
     pub credits: u8,
-    pub dependencies: Dependencies,
+    #[serde(deserialize_with = "from_bad_list")]
+    pub dependencies: Vec<Code>,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -85,36 +105,21 @@ pub enum Entry {
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Entries {
-    pub entry: Vec<Entry>,
-}
-
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct TermWithEntries {
     #[serde(flatten)]
     pub term: Term,
-    pub entries: Entries,
-}
-
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct WithTerm {
-    pub term: Vec<TermWithEntries>,
-}
-
-#[derive(Debug, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct WithoutTerm {
-    pub without_term: Vec<Entry>,
+    #[serde(deserialize_with = "from_bad_list")]
+    pub entries: Vec<Entry>,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Section {
     pub name: String,
-    pub terms: Option<WithTerm>,
-    pub without_term: Option<WithoutTerm>,
+    #[serde(deserialize_with = "from_bad_list")]
+    pub terms: Vec<TermWithEntries>,
+    #[serde(deserialize_with = "from_bad_list")]
+    pub without_term: Vec<Entry>,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -140,6 +145,7 @@ pub struct CareerPlan {
     pub career: String,
     pub degree_level: DegreeLevel,
     pub since: String,
+    #[serde(deserialize_with = "from_bad_list")]
     pub sections: Vec<Section>,
 }
 
