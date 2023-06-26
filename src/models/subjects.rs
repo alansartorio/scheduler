@@ -124,6 +124,11 @@ impl Subject {
     pub fn optimize(&mut self) {
         for com in self.commissions.iter_mut() {
             com.schedule.simplify();
+
+            com.schedule
+                .days
+                .iter_mut()
+                .for_each(|(_, day)| day.update_has_collissions());
         }
 
         let new_comms = {
