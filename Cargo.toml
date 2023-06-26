@@ -20,8 +20,8 @@ permutator = "*"
 colored = "*"
 itertools = "*"
 json_parser = { path = "json_parser", optional = true }
-serde_json = { version = "1.0.82", optional = true }
-clap = { version = "3.2.8", features = ["derive"], optional = true }
+serde_json = { version = "1.0.99", optional = true }
+clap = { version = "4.3.8", features = ["derive"], optional = true }
 
 [workspace]
 members = [
