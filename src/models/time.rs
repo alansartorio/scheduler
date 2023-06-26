@@ -2,6 +2,14 @@ use std::fmt::{Debug, Display};
 use std::ops::Sub;
 use std::{error::Error, str::FromStr};
 
+#[macro_export]
+macro_rules! t {
+    ($t:expr) => {
+        $t.parse().unwrap()
+    };
+}
+
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Time {
     pub hour: u8,

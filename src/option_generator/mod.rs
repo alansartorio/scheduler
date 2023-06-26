@@ -178,13 +178,13 @@ impl<'a, K: Hash + Eq + Clone + 'a, T: Collidable + Hash + Eq + Clone + 'a> Opti
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::Span;
+    use crate::{models::Span, t};
 
     #[test]
     fn generate_test() {
-        let sa = Span::new("00:00".parse().unwrap(), "01:00".parse().unwrap());
-        let sb = Span::new("01:00".parse().unwrap(), "02:00".parse().unwrap());
-        let sc = Span::new("02:00".parse().unwrap(), "03:00".parse().unwrap());
+        let sa = Span::new(t!("00:00"), t!("01:00"));
+        let sb = Span::new(t!("01:00"), t!("02:00"));
+        let sc = Span::new(t!("02:00"), t!("03:00"));
         let mut generator = OptionGenerator::default();
         generator
             .set_mandatory(vec![("0", vec![sa, sc])])

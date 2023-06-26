@@ -92,15 +92,18 @@ impl<T> Collidable for Week<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{Day, DaysOfTheWeek, Span};
+    use crate::{
+        models::{Day, DaysOfTheWeek, Span},
+        t,
+    };
     use enum_map::enum_map;
 
     #[test]
     fn test_simplify_week() {
-        let ta = "00:00".parse().unwrap();
-        let tb = "01:00".parse().unwrap();
-        let tc = "02:00".parse().unwrap();
-        let td = "03:00".parse().unwrap();
+        let ta = t!("00:00");
+        let tb = t!("01:00");
+        let tc = t!("02:00");
+        let td = t!("03:00");
         let task_a = Task::new(Span::new(ta, tb), 1);
         let task_b = Task::new(Span::new(ta, tc), 2);
         let task_c = Task::new(Span::new(tc, td), 4);
@@ -125,6 +128,38 @@ mod tests {
                 DaysOfTheWeek::Monday => Day::new(vec![
                     Task::new(Span::new(ta, tc), 3),
                     task_c
+                ]),
+                _ => Day::new(vec![])
+            })
+        )
+    }
+
+    #[test]
+    fn test_simplify_week_2() {
+        let ta = t!("15:00");
+        let tb = t!("18:00");
+
+        let task_a = Task::new(Span::new(ta, tb), 1);
+        let task_b = Task::new(Span::new(ta, tb), 2);
+
+        let mut week = Week::new(enum_map! {
+            DaysOfTheWeek::Monday => Day::new(vec![
+                task_a,
+                task_b
+            ]),
+            _ => Day::new(vec![])
+        });
+
+        week.simplify();
+        week.days
+            .iter_mut()
+            .for_each(|(_, day)| day.update_has_collissions());
+
+        assert_eq!(
+            week,
+            Week::new(enum_map! {
+                DaysOfTheWeek::Monday => Day::new(vec![
+                    Task::new(Span::new(ta, tb), 3),
                 ]),
                 _ => Day::new(vec![])
             })
